@@ -1,0 +1,16 @@
+﻿# Boursio â€” robots.txt
+# https://boursio.onrender.com
+
+User-agent: *
+Allow: /
+
+# Bloquer les chemins techniques inutiles
+Disallow: /api/
+Disallow: /_build/
+Disallow: /.well-known/
+
+# Crawler delays pour ne pas surcharger
+Crawl-delay: 1
+
+# Sitemap principal
+Sitemap: https://boursio.onrender.com/sitemap.xml

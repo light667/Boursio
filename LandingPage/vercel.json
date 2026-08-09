@@ -1,0 +1,12 @@
+{
+  "builds": [
+    { "src": "package.json", "use": "@vercel/static-build" }
+  ],
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "^/about/?$", "dest": "/about.html" },
+    { "src": "^/legal/?$", "dest": "/legal.html" },
+    { "src": "^/privacy/?$", "dest": "/privacy.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

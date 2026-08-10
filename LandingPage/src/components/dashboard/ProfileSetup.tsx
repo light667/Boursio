@@ -13,6 +13,7 @@ import {
   Plus,
   Trash2,
   Sparkles,
+  AlertCircle,
 } from "lucide-react";
 
 interface ProfileSetupProps {
@@ -29,26 +30,31 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
   const [activeStep, setActiveStep] = useState<number>(1);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Form State
+  // Form State - Real values without fake pre-filled defaults
   const [fullName, setFullName] = useState(initialProfile?.fullName || "");
-  const [dateOfBirth, setDateOfBirth] = useState(initialProfile?.dateOfBirth || "2002-05-15");
-  const [countryOfOrigin, setCountryOfOrigin] = useState(initialProfile?.countryOfOrigin || "Sénégal");
-  const [countryOfResidence, setCountryOfResidence] = useState(initialProfile?.countryOfResidence || "Sénégal");
+  const [dateOfBirth, setDateOfBirth] = useState(initialProfile?.dateOfBirth || "");
+  const [countryOfOrigin, setCountryOfOrigin] = useState(initialProfile?.countryOfOrigin || "");
+  const [countryOfResidence, setCountryOfResidence] = useState(initialProfile?.countryOfResidence || "");
   const [studyLevel, setStudyLevel] = useState(initialProfile?.studyLevel || "Licence 3");
   const [targetDegree, setTargetDegree] = useState(initialProfile?.targetDegree || "Master");
-  const [studyField, setStudyField] = useState(initialProfile?.studyField || "Informatique & IA");
-  const [gpaScore, setGpaScore] = useState<number>(initialProfile?.gpaScore || 15.5);
-  const [lastDegreeGpa, setLastDegreeGpa] = useState<number>(initialProfile?.lastDegreeGpa || 15.8);
+  const [studyField, setStudyField] = useState(initialProfile?.studyField || "");
+  const [gpaScore, setGpaScore] = useState<string>(
+    initialProfile?.gpaScore ? String(initialProfile.gpaScore) : ""
+  );
+  const [lastDegreeGpa, setLastDegreeGpa] = useState<string>(
+    initialProfile?.lastDegreeGpa ? String(initialProfile.lastDegreeGpa) : ""
+  );
   const [languages, setLanguages] = useState<{ language: string; level: any }[]>(
     initialProfile?.languages || [
       { language: "Français", level: "Bilingue" },
-      { language: "Anglais", level: "Avancé" },
+      { language: "Anglais", level: "Intermédiaire" },
     ]
   );
 
   useEffect(() => {
-    if (!initialProfile) {
+    if (!initialProfile && userId) {
       getProfileFromSupabase(userId).then((prof) => {
         if (prof) {
           setFullName(prof.fullName || "");
@@ -57,9 +63,9 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
           setCountryOfResidence(prof.countryOfResidence || "");
           setStudyLevel(prof.studyLevel || "Licence 3");
           setTargetDegree(prof.targetDegree || "Master");
-          setStudyField(prof.studyField || "Informatique");
-          setGpaScore(prof.gpaScore || 15.0);
-          setLastDegreeGpa(prof.lastDegreeGpa || 15.0);
+          setStudyField(prof.studyField || "");
+          setGpaScore(prof.gpaScore ? String(prof.gpaScore) : "");
+          setLastDegreeGpa(prof.lastDegreeGpa ? String(prof.lastDegreeGpa) : "");
           if (prof.languages && prof.languages.length > 0) {
             setLanguages(prof.languages);
           }
@@ -69,7 +75,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
   }, [userId, initialProfile]);
 
   const handleAddLanguage = () => {
-    setLanguages([...languages, { language: "Espagnol", level: "Intermédiaire" }]);
+    setLanguages([...languages, { language: "", level: "Intermédiaire" }]);
   };
 
   const handleRemoveLanguage = (index: number) => {
@@ -78,21 +84,36 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
 
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    setErrorMsg(null);
+
+    // Validation
+    if (!fullName.trim() || !countryOfOrigin.trim() || !studyField.trim() || !gpaScore) {
+      setErrorMsg("Veuillez remplir toutes les informations requises avant d'enregistrer.");
+      return;
+    }
+
+    const numericGpa = parseFloat(gpaScore);
+    const numericLastGpa = parseFloat(lastDegreeGpa) || numericGpa;
+
+    if (isNaN(numericGpa) || numericGpa < 0 || numericGpa > 20) {
+      setErrorMsg("La moyenne générale doit être un nombre valide entre 0 et 20.");
+      return;
+    }
+
     setSaving(true);
-    setSavedSuccess(false);
 
     const profileData: StudentProfile = {
       userId,
-      fullName: fullName || "Étudiant Boursio",
+      fullName: fullName.trim(),
       dateOfBirth,
-      countryOfOrigin,
-      countryOfResidence,
+      countryOfOrigin: countryOfOrigin.trim(),
+      countryOfResidence: (countryOfResidence || countryOfOrigin).trim(),
       studyLevel,
       targetDegree,
-      studyField,
-      gpaScore: Number(gpaScore),
-      lastDegreeGpa: Number(lastDegreeGpa),
-      languages,
+      studyField: studyField.trim(),
+      gpaScore: numericGpa,
+      lastDegreeGpa: numericLastGpa,
+      languages: languages.filter((l) => l.language.trim() !== ""),
       updatedAt: new Date().toISOString(),
     };
 
@@ -103,6 +124,8 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
       setSavedSuccess(true);
       onProfileSaved(profileData);
       setTimeout(() => setSavedSuccess(false), 3000);
+    } else {
+      setErrorMsg("Une erreur s'est produite lors de l'enregistrement de votre profil.");
     }
   };
 
@@ -150,11 +173,12 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
               Configuration de votre Profil Étudiant
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ces variables sont utilisées par notre algorithme de scoring pour vous recommander les bourses les plus adaptées.
+              Renseignez vos véritables informations pour que notre algorithme de scoring génère vos recommandations de bourses sur-mesure.
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => handleSaveProfile()}
             disabled={saving}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-glow transition-all hover:opacity-90 disabled:opacity-50"
@@ -176,6 +200,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
         {/* Step Tabs Indicator */}
         <div className="mt-6 flex items-center gap-2 border-t border-border/50 pt-4">
           <button
+            type="button"
             onClick={() => setActiveStep(1)}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
               activeStep === 1
@@ -186,6 +211,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
             <User className="h-3.5 w-3.5" /> 1. Informations Personnelles
           </button>
           <button
+            type="button"
             onClick={() => setActiveStep(2)}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
               activeStep === 2
@@ -196,6 +222,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
             <GraduationCap className="h-3.5 w-3.5" /> 2. Parcours & Filière
           </button>
           <button
+            type="button"
             onClick={() => setActiveStep(3)}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
               activeStep === 3
@@ -207,6 +234,13 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
           </button>
         </div>
       </div>
+
+      {errorMsg && (
+        <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-xs font-medium text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {/* Main Form Content */}
       <form onSubmit={handleSaveProfile} className="space-y-6">
@@ -227,7 +261,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="ex: Mamadou Ndiaye"
+                  placeholder="ex: Jean Dupont, Mamadou Ndiaye..."
                   className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -256,7 +290,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                     required
                     value={countryOfOrigin}
                     onChange={(e) => setCountryOfOrigin(e.target.value)}
-                    placeholder="ex: Sénégal, Côte d'Ivoire, Cameroun..."
+                    placeholder="ex: Sénégal, Côte d'Ivoire, Cameroun, France..."
                     className="w-full rounded-xl border border-border bg-input pl-10 pr-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -344,7 +378,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                 required
                 value={studyField}
                 onChange={(e) => setStudyField(e.target.value)}
-                placeholder="ex: Informatique, Intelligence Artificielle, Santé Publique..."
+                placeholder="ex: Informatique, Médecine, Droit, Génie Civil..."
                 className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary mb-3"
               />
               {/* Quick Suggestion Chips */}
@@ -404,7 +438,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                   max="20"
                   required
                   value={gpaScore}
-                  onChange={(e) => setGpaScore(parseFloat(e.target.value))}
+                  onChange={(e) => setGpaScore(e.target.value)}
                   placeholder="ex: 15.5"
                   className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
@@ -421,7 +455,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                   max="20"
                   required
                   value={lastDegreeGpa}
-                  onChange={(e) => setLastDegreeGpa(parseFloat(e.target.value))}
+                  onChange={(e) => setLastDegreeGpa(e.target.value)}
                   placeholder="ex: 16.0"
                   className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
@@ -457,7 +491,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                         updated[idx].language = e.target.value;
                         setLanguages(updated);
                       }}
-                      placeholder="Langue (ex: Français, Anglais...)"
+                      placeholder="Langue (ex: Français, Anglais, Espagnol...)"
                       className="w-full sm:w-1/2 rounded-lg border border-border bg-input px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
                     />
 
@@ -508,7 +542,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
                   <>
-                    <Save className="h-4 w-4" /> Enregistrer & Générer les Recommandations
+                    <Save className="h-4 w-4" /> Enregistrer & Accéder au Dashboard
                   </>
                 )}
               </button>

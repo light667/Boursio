@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { StudentProfile, Bourse } from "@/lib/types";
-import { logoutUser } from "@/lib/firebase-auth";
+import { logoutUser, subscribeAuthState } from "@/lib/firebase-auth";
 import { getProfileFromSupabase, getUserLikedBourses } from "@/lib/supabase";
 import { getAllBourses } from "@/lib/boursesData";
 import { RecommandationsView } from "./RecommandationsView";
@@ -17,11 +17,8 @@ import {
   User,
   LogOut,
   LogIn,
-  Heart,
-  ChevronRight,
   Menu,
   X,
-  GraduationCap,
   Globe,
 } from "lucide-react";
 
@@ -41,24 +38,46 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const userId = currentUser ? currentUser.uid : "demo-student-123";
+  // Subscribe to Firebase Auth state
+  useEffect(() => {
+    const unsubscribe = subscribeAuthState((user) => {
+      if (user) {
+        setCurrentUser(user);
+        // Fetch profile from Supabase for authenticated user
+        getProfileFromSupabase(user.uid).then((prof) => {
+          if (prof && prof.fullName) {
+            setStudentProfile(prof);
+          } else {
+            // If profile does not exist yet, force user to complete profile first
+            setStudentProfile(null);
+            setActiveTab("profil");
+          }
+        });
+        getUserLikedBourses(user.uid).then(setLikedBourseIds);
+      } else {
+        setCurrentUser(null);
+        setStudentProfile(null);
+        // If not logged in, prompt login modal
+        setIsAuthModalOpen(true);
+      }
+    });
 
-  // Load scholarships & user data
+    return () => unsubscribe();
+  }, []);
+
+  // Load active scholarships
   useEffect(() => {
     const data = getAllBourses();
     setBourses(data);
+  }, []);
 
-    getProfileFromSupabase(userId).then((prof) => {
-      if (prof) setStudentProfile(prof);
-    });
-
-    getUserLikedBourses(userId).then(setLikedBourseIds);
-  }, [userId]);
+  const userId = currentUser ? currentUser.uid : "";
 
   const handleLogout = async () => {
     await logoutUser();
     setCurrentUser(null);
     setStudentProfile(null);
+    setIsAuthModalOpen(true);
   };
 
   const likedBoursesList = bourses.filter((b) => likedBourseIds.includes(b.id));
@@ -183,14 +202,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
             <div className="rounded-xl border border-border bg-secondary/50 p-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-accent font-bold text-sm">
-                  {studentProfile?.fullName ? studentProfile.fullName.charAt(0) : "E"}
+                  {studentProfile?.fullName ? studentProfile.fullName.charAt(0).toUpperCase() : "E"}
                 </div>
                 <div className="overflow-hidden">
                   <div className="text-xs font-bold text-foreground truncate">
                     {studentProfile?.fullName || currentUser.email || "Étudiant Boursio"}
                   </div>
                   <div className="text-[10px] text-muted-foreground truncate">
-                    {studentProfile?.studyLevel || "Compte Activé"}
+                    {studentProfile?.studyLevel || "Profil en cours"}
                   </div>
                 </div>
               </div>
@@ -232,7 +251,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg border border-border p-2 text-foreground"
+            className="rounded-lg border border-border bg-card p-1.5 text-foreground"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -291,6 +310,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
           >
             <User className="h-4 w-4 text-accent" /> Mon Profil Étudiant
           </button>
+
+          {onBackToLanding && (
+            <button
+              onClick={onBackToLanding}
+              className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary"
+            >
+              <Globe className="h-4 w-4" /> Site Vitrine
+            </button>
+          )}
         </div>
       )}
 
@@ -384,8 +412,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={(usr) => {
           setCurrentUser(usr);
+          setIsAuthModalOpen(false);
           getProfileFromSupabase(usr.uid).then((prof) => {
-            if (prof) setStudentProfile(prof);
+            if (prof && prof.fullName) {
+              setStudentProfile(prof);
+              setActiveTab("recommandations");
+            } else {
+              setStudentProfile(null);
+              setActiveTab("profil");
+            }
           });
         }}
       />

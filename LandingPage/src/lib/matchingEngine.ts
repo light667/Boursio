@@ -5,18 +5,17 @@ export function calculateScholarshipMatch(
   profile: StudentProfile | null
 ): { score: number; reasons: string[] } {
   if (!profile) {
-    // Default base score when profile is missing
-    const baseScore = Math.min(Math.max(bourse.qualite_score || 50, 40), 95);
+    // If profile is not yet filled, return a base match indicator requiring profile completion
     return {
-      score: baseScore,
-      reasons: ["Complétez votre profil pour un calcul sur-mesure"],
+      score: 50,
+      reasons: ["Veuillez compléter votre profil étudiant pour afficher votre score de matching réel"],
     };
   }
 
-  let score = 50; // Base score
+  let score = 40; // Base score
   const reasons: string[] = [];
 
-  // 1. Study Level & Target Degree matching
+  // 1. Study Level & Target Degree matching (Weight: 25 pts)
   const bourseLevelsRaw = bourse.niveau_etude;
   let bourseLevels: string[] = [];
   if (Array.isArray(bourseLevelsRaw)) {
@@ -39,11 +38,11 @@ export function calculateScholarshipMatch(
     bourseLevels.length === 0;
 
   if (isLevelMatch) {
-    score += 15;
-    reasons.push(`Niveau d'étude (${profile.targetDegree || profile.studyLevel}) correspond`);
+    score += 20;
+    reasons.push(`Niveau d'étude cible (${profile.targetDegree || profile.studyLevel}) éligible`);
   }
 
-  // 2. Field of Study / Domain matching
+  // 2. Field of Study / Domain matching (Weight: 25 pts)
   const bourseDomainsRaw = bourse.domaines;
   let bourseDomains: string[] = [];
   if (Array.isArray(bourseDomainsRaw)) {
@@ -69,50 +68,49 @@ export function calculateScholarshipMatch(
     ) || bourseDomains.length === 0;
 
   if (isDomainMatch) {
-    score += 15;
+    score += 20;
     if (studentField) {
-      reasons.push(`Domaine d'étude (${profile.studyField}) éligible`);
+      reasons.push(`Filière d'étude (${profile.studyField}) correspondant aux domaines de la bourse`);
     } else {
-      reasons.push("Ouvert à tous les domaines");
+      reasons.push("Ouvert à tous les domaines d'études");
     }
   }
 
-  // 3. African & Nationality Eligibility
-  const africanCountries = [
-    "sénégal", "senegal", "côte d'ivoire", "cote d'ivoire", "cameroun", "cameroon",
-    "bénin", "benin", "togo", "mali", "guinée", "guinea", "burkina faso", "niger",
-    "gabon", "congo", "rdc", "rd congo", "maroc", "tunisie", "algérie", "madagascar",
-    "rwanda", "burundi", "tchad", "mauritanie", "kenya", "ghana", "nigeria"
-  ];
-
+  // 3. African & Nationality Eligibility (Weight: 15 pts)
   const originCountry = (profile.countryOfOrigin || "").toLowerCase();
   const residenceCountry = (profile.countryOfResidence || "").toLowerCase();
-  const isAfrican =
-    africanCountries.some((c) => originCountry.includes(c) || residenceCountry.includes(c)) || true; // Default true for target audience
 
-  if (bourse.africains_eligibles && isAfrican) {
-    score += 12;
-    reasons.push("Spécialement ouvert aux ressortissants africains");
+  if (bourse.africains_eligibles) {
+    score += 10;
+    reasons.push("Spécialement réservé/ouvert aux étudiants africains");
   }
 
-  // 4. GPA & Academic Performance matching
+  if (originCountry || residenceCountry) {
+    score += 5;
+    reasons.push(`Pays d'origine (${profile.countryOfOrigin}) éligible`);
+  }
+
+  // 4. GPA & Academic Performance matching (Weight: 10 pts)
   const studentGpa = Math.max(profile.gpaScore || 0, profile.lastDegreeGpa || 0);
   if (studentGpa >= 16) {
-    score += 8;
-    reasons.push("Excellente moyenne académique (≥ 16/20)");
+    score += 10;
+    reasons.push(`Excellente moyenne académique (${studentGpa}/20)`);
   } else if (studentGpa >= 14) {
-    score += 5;
-    reasons.push("Très bonne moyenne académique (≥ 14/20)");
+    score += 7;
+    reasons.push(`Très bonne moyenne académique (${studentGpa}/20)`);
+  } else if (studentGpa >= 12) {
+    score += 4;
+    reasons.push(`Bonne moyenne académique (${studentGpa}/20)`);
   }
 
-  // 5. Funding Type preference
+  // 5. Full Funding Preference (Weight: 5 pts)
   if (bourse.financement === "TOTAL") {
     score += 5;
-    reasons.push("Prise en charge intégrale (Bourse Totalement Financée)");
+    reasons.push("Prise en charge financière intégrale (Bourse Totale)");
   }
 
-  // Cap score between 35% and 99%
-  const finalScore = Math.min(Math.max(Math.round(score), 35), 99);
+  // Final score bounded between 40% and 99%
+  const finalScore = Math.min(Math.max(Math.round(score), 40), 99);
 
   return {
     score: finalScore,

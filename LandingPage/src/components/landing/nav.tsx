@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Menu, ArrowRight, ExternalLink } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { APP_URL } from "@/lib/site";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Sheet,
@@ -20,7 +19,11 @@ const NAV_LINKS = [
   { href: "#contact", label: "Contact" },
 ] as const;
 
-export function Nav() {
+interface NavProps {
+  onLaunchApp?: () => void;
+}
+
+export function Nav({ onLaunchApp }: NavProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -55,15 +58,14 @@ export function Nav() {
         <div className="flex items-center gap-3">
           <ThemeToggle className="hidden sm:inline-flex" />
 
-          <a
-            href={APP_URL}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={onLaunchApp}
             className="gradient-primary text-primary-foreground text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-95 transition-all shadow-glow hover:shadow-glow-strong inline-flex items-center gap-2 whitespace-nowrap"
           >
             <span>Lancer la version web</span>
             <ExternalLink className="h-3.5 w-3.5 hidden sm:inline-block" />
-          </a>
+          </button>
 
           {/* Mobile Sheet Menu Trigger */}
           <Sheet open={open} onOpenChange={setOpen}>
@@ -101,14 +103,13 @@ export function Nav() {
                 <ThemeToggle />
               </div>
               <SheetClose asChild>
-                <a
-                  href={APP_URL}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => { setOpen(false); onLaunchApp?.(); }}
                   className="mt-6 w-full gradient-primary text-primary-foreground font-semibold px-4 py-3 rounded-xl hover:opacity-90 transition shadow-glow inline-flex items-center justify-center gap-2"
                 >
                   Lancer la version web <ArrowRight className="h-4 w-4" />
-                </a>
+                </button>
               </SheetClose>
             </SheetContent>
           </Sheet>

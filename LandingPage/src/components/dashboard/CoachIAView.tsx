@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { StudentProfile } from "@/lib/types";
+import { generateAICoachResponse } from "@/lib/llm";
 import {
   Bot,
   Send,
@@ -35,7 +36,7 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
       sender: "ai",
       text: `Bonjour ${
         studentProfile?.fullName ? studentProfile.fullName : "futur Boursier"
-      } ! Je suis votre Coach IA Boursio. 🎓\n\nJe suis spécialisé pour vous accompagner à 100% dans votre aventure d'études internationales :\n• Rédaction de CV & Lettre de Motivation percutants\n• Stratégie pour obtenir vos Lettres de Recommandation\n• Simulation d'entretiens de bourse\n• Démarches de Passeport & Demande de Visa\n• Conseils pour la Vie Étudiante à l'étranger\n\nQue souhaitez-vous préparer aujourd'hui ?`,
+      } ! Je suis votre Coach IA Boursio. 🎓\n\nJe suis propulsé par les derniers modèles LLM (Groq Llama 3.3 70B, Mistral, Gemini) pour vous accompagner à 100% dans votre aventure d'études internationales :\n• Rédaction de CV & Lettres de Motivation percutantes\n• Stratégies pour obtenir vos Lettres de Recommandation\n• Simulation d'entretiens de bourse\n• Démarches de Passeport & Demandes de Visa\n• Conseils pour la Vie Étudiante à l'étranger\n\nQue souhaitez-vous préparer aujourd'hui ?`,
       timestamp: "Maintenant",
     },
   ]);
@@ -104,47 +105,8 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
     if (!textToSend) setInputPrompt("");
     setIsTyping(true);
 
-    // Simulate RAG generation response based on student context
-    setTimeout(() => {
-      let aiResponseText = "";
-      const lower = text.toLowerCase();
-
-      if (lower.includes("cv")) {
-        aiResponseText = `📄 **Guide de Rédaction CV Académique & Bourse**\n\nVoici les rubriques clés pour maximiser votre score auprès des jurys :\n\n1. **En-tête & Objectif** : Mentionnez vos coordonnées, nationalité (${
-          studentProfile?.countryOfOrigin || "votre pays"
-        }) et un titre clair (ex: *Candidat Master en ${studentProfile?.studyField || "Informatique"}*).\n2. **Parcours Académique** : Indiquez votre moyenne générale (${
-          studentProfile?.gpaScore || "15.5"
-        }/20) et vos mentions.\n3. **Projets & Réalisations** : Détaillez 2 à 3 projets académiques ou de recherche clés.\n4. **Compétences Linguistiques** : Précisez vos niveaux (${
-          studentProfile?.languages?.map((l) => `${l.language} ${l.level}`).join(", ") || "Français, Anglais"
-        }).\n\n💡 *Conseil du Coach* : Préférez des verbes d'action au passé composé ou présent ("Conçu", "Analysé", "Dirigé"). Souhaitez-vous que nous générions un modèle prêt à remplir ?`;
-      } else if (lower.includes("lettre de motivation") || lower.includes("lettre")) {
-        aiResponseText = `✉️ **Structure Stratégique de la Lettre de Motivation**\n\nPour convaincre le comité de bourse :\n\n• **Introduction** : Accroche directe sur votre passion pour ${
-          studentProfile?.studyField || "votre filière"
-        } et pourquoi cette bourse spécifique est le levier indispensable.\n• **Corps 1 (Votre Parcours)** : Mettez en avant votre moyenne (${
-          studentProfile?.gpaScore || "15"
-        }/20) et votre diplôme actuel (${studentProfile?.studyLevel || "Licence"}).\n• **Corps 2 (Projet d'Avenir)** : Expliquez comment vous comptez réinvestir vos compétences au retour ou dans votre carrière.\n• **Conclusion** : Remerciements et réitération de votre motivation.\n\nSouhaitez-vous une ébauche personnalisée ?`;
-      } else if (lower.includes("recommandation")) {
-        aiResponseText = `🤝 **Obtenir une Excellente Lettre de Recommandation**\n\n1. **Choix du Référent** : Privilégiez un professeur ayant enseigné dans votre filière ou votre encadreur de mémoire.\n2. **Timing** : Contactez-le au moins 3 à 4 semaines avant la deadline.\n3. **Kit pour le Professeur** : Fournissez-lui un résumé de votre profil (Moyenne: ${
-          studentProfile?.gpaScore || "15"
-        }/20, projet d'étude, intitulé de la bourse).\n\nModèle de message à envoyer :\n*"Monsieur le Professeur, dans le cadre de ma candidature à la bourse [...], votre recommandation serait un atout décisif..."*`;
-      } else if (lower.includes("visa") || lower.includes("passeport")) {
-        aiResponseText = `🛂 **Démarches Administrative Passeport & Visa**\n\n1. **Passeport** : Demandez-le immédiatement dans le centre de pièces d'identité de votre pays (${
-          studentProfile?.countryOfResidence || "votre pays de résidence"
-        }). Prévoyez un passeport valide au moins 2 ans.\n2. **Lettre d'Admission & Bourse** : Conservez l'attestation de bourse (financement total ou partiel).\n3. **Justificatifs Financiers & Logement** : Préparez les fiches de paie des garants ou l'attestation de prise en charge par la bourse.\n4. **Prise de Rendez-vous Visa** : Prenez rdv au consulat/ambassade dès la réception de la lettre d'attribution.`;
-      } else if (lower.includes("entretien") || lower.includes("jury")) {
-        aiResponseText = `🎙️ **Préparation aux Entretiens de Bourse**\n\nLes 3 questions pièges du jury et comment triompher :\n\n1. *"Pourquoi vous et pas un autre candidat ?"*\n👉 Mettez en avant l'adéquation entre votre profil (${
-          studentProfile?.studyField || "votre domaine"
-        }) et vos objectifs d'impact dans votre pays d'origine.\n\n2. *"Quels sont vos projets après l'obtention du diplôme ?"*\n👉 Soyez précis : retour au pays, création d'entreprise ou doctorat.\n\n3. *"Comment comptez-vous gérer le choc culturel ?"*\n👉 Parlez de votre capacité d'adaptation et maîtrise des langues (${
-          studentProfile?.languages?.map((l) => l.language).join(", ") || "Français/Anglais"
-        }).`;
-      } else {
-        aiResponseText = `💡 **Conseil sur-mesure du Coach IA Boursio**\n\nPour réussir votre projet d'étude en **${
-          studentProfile?.targetDegree || "Master"
-        }** en **${
-          studentProfile?.studyField || "votre domaine"
-        }** :\n\n1. Gardez un dossier scanné propre en version PDF (Diplômes, Relevés de notes, Pièce d'identité).\n2. Veillez aux deadlines de chaque bourse recommandé sur votre Dashboard.\n3. N'hésitez pas à solliciter également notre section **Mentorat Humain** si vous souhaitez échanger avec un alumni bénéficiaire de bourse !`;
-      }
-
+    try {
+      const aiResponseText = await generateAICoachResponse(text, studentProfile);
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
@@ -153,8 +115,11 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
       };
 
       setMessages((prev) => [...prev, aiMsg]);
+    } catch (err) {
+      console.error("AI Coach Generation error:", err);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   const handleCopyText = (id: string, text: string) => {
@@ -173,10 +138,10 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
           </div>
           <div>
             <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-              Coach IA Boursio <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-semibold text-accent border border-accent/30">RAG Context Engine</span>
+              Coach IA Boursio <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-semibold text-accent border border-accent/30">Groq / Mistral / Gemini Active</span>
             </h2>
             <p className="text-xs text-muted-foreground">
-              Assistant intelligent entraîné pour les bourses & opportunités internationales
+              Assistant intelligent connecté aux meilleurs modèles LLM & RAG
             </p>
           </div>
         </div>
@@ -294,7 +259,7 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
           type="text"
           value={inputPrompt}
           onChange={(e) => setInputPrompt(e.target.value)}
-          placeholder="Posez votre question (ex: Comment préparer mon entretien de bourse ?)..."
+          placeholder="Posez votre question au Coach IA..."
           className="flex-1 rounded-xl border border-border bg-input px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
         <button

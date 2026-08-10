@@ -2,13 +2,13 @@ import { initializeApp, type FirebaseApp, getApps } from "firebase/app";
 import { getAnalytics, isSupported, type Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCtIqEpaOSKvFYAgSqTpzCIW4eAk28RFXg",
-  authDomain: "flyai-org.firebaseapp.com",
-  projectId: "flyai-org",
-  storageBucket: "flyai-org.firebasestorage.app",
-  messagingSenderId: "83333785148",
-  appId: "1:83333785148:web:e8bab952b1cf9e15d20539",
-  measurementId: "G-Z087BYDKX9",
+  apiKey: "AIzaSyBYp-up7ekvFqCmlySn9PCpAOiwTepdUuc",
+  authDomain: "boursio.firebaseapp.com",
+  projectId: "boursio",
+  storageBucket: "boursio.firebasestorage.app",
+  messagingSenderId: "435468288038",
+  appId: "1:435468288038:web:154926d4cace31bd5266e7",
+  measurementId: "G-F08E4C1S9F",
 };
 
 let analytics: Analytics | null = null;
@@ -30,4 +30,3 @@ export async function initFirebaseAnalytics() {
   analytics = getAnalytics(getFirebaseApp());
   return analytics;
 }
-

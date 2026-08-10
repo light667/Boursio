@@ -1,15 +1,18 @@
 import { Check, Sparkles } from "lucide-react";
 import { PRICING_PLANS } from "./data";
-import { APP_URL } from "@/lib/site";
 
-export function Pricing() {
+interface PricingProps {
+  onLaunchApp?: () => void;
+}
+
+export function Pricing({ onLaunchApp }: PricingProps) {
   return (
     <section id="pricing" className="relative py-24 sm:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="mb-16 text-center max-w-3xl mx-auto">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3">
-            Offres & Tarifs
+            Offres &amp; Tarifs
           </p>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground">
             Des tarifs accessibles à tous,{" "}
@@ -81,10 +84,9 @@ export function Pricing() {
               </div>
 
               {/* CTA button */}
-              <a
-                href={APP_URL}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={onLaunchApp}
                 className={`flex items-center justify-center h-12 rounded-2xl text-sm font-bold transition-all ${
                   plan.ctaPrimary
                     ? "gradient-cta text-white shadow-glow hover:shadow-glow-strong hover:scale-[1.01]"
@@ -92,7 +94,7 @@ export function Pricing() {
                 }`}
               >
                 {plan.cta}
-              </a>
+              </button>
             </div>
           ))}
         </div>

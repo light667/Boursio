@@ -22,13 +22,15 @@ import {
   Menu,
   X,
   GraduationCap,
+  Globe,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
   initialUser?: any;
+  onBackToLanding?: () => void;
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser }) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, onBackToLanding }) => {
   const [currentUser, setCurrentUser] = useState<any>(initialUser || null);
   const [activeTab, setActiveTab] = useState<"recommandations" | "coach" | "alertes" | "mentorat" | "profil">(
     "recommandations"
@@ -163,6 +165,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
             </button>
           </nav>
         </div>
+
+        {/* Back to landing page link */}
+        {onBackToLanding && (
+          <button
+            onClick={onBackToLanding}
+            className="flex w-full items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            Site Vitrine
+          </button>
+        )}
 
         {/* User Card & Logout / Login */}
         <div className="border-t border-border pt-4 space-y-3">

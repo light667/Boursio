@@ -1,7 +1,11 @@
 import { ArrowRight, Globe } from "lucide-react";
-import { APP_URL, PLAYSTORE_URL, APPSTORE_URL } from "@/lib/site";
+import { PLAYSTORE_URL, APPSTORE_URL } from "@/lib/site";
 
-export function Hero() {
+interface HeroProps {
+  onLaunchApp?: () => void;
+}
+
+export function Hero({ onLaunchApp }: HeroProps) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Background layers */}
@@ -25,8 +29,6 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center py-20 lg:py-28">
 
-
-
         {/* Headline */}
         <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.08] mb-6">
           <span className="block text-foreground">Trouvez les bourses d'études</span>
@@ -42,16 +44,15 @@ export function Hero() {
         {/* Action / Launch Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-3xl mx-auto mb-12">
           {/* Web Launcher */}
-          <a
-            href={APP_URL}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={onLaunchApp}
             className="group w-full sm:w-auto inline-flex items-center justify-center gap-3 h-14 px-8 rounded-2xl font-bold text-base gradient-cta text-white shadow-glow hover:shadow-glow-strong transition-all duration-200 hover:scale-[1.02]"
           >
             <Globe className="h-5 w-5" />
             <span>Lancer la version web</span>
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-          </a>
+          </button>
 
           {/* Play Store Button */}
           <a

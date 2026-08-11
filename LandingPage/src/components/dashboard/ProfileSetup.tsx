@@ -12,9 +12,12 @@ import {
   Globe,
   Plus,
   Trash2,
-  Sparkles,
   AlertCircle,
+  FileText,
+  Camera,
+  Upload,
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface ProfileSetupProps {
   userId: string;
@@ -32,7 +35,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Form State - Real values without fake pre-filled defaults
+  // Form State - Real values without pre-filled fake defaults
   const [fullName, setFullName] = useState(initialProfile?.fullName || "");
   const [dateOfBirth, setDateOfBirth] = useState(initialProfile?.dateOfBirth || "");
   const [countryOfOrigin, setCountryOfOrigin] = useState(initialProfile?.countryOfOrigin || "");
@@ -40,12 +43,16 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
   const [studyLevel, setStudyLevel] = useState(initialProfile?.studyLevel || "Licence 3");
   const [targetDegree, setTargetDegree] = useState(initialProfile?.targetDegree || "Master");
   const [studyField, setStudyField] = useState(initialProfile?.studyField || "");
+  const [university, setUniversity] = useState(initialProfile?.university || "");
   const [gpaScore, setGpaScore] = useState<string>(
     initialProfile?.gpaScore ? String(initialProfile.gpaScore) : ""
   );
   const [lastDegreeGpa, setLastDegreeGpa] = useState<string>(
     initialProfile?.lastDegreeGpa ? String(initialProfile.lastDegreeGpa) : ""
   );
+  const [cvUrl, setCvUrl] = useState(initialProfile?.cvUrl || "");
+  const [photoUrl, setPhotoUrl] = useState(initialProfile?.photoUrl || "");
+
   const [languages, setLanguages] = useState<{ language: string; level: any }[]>(
     initialProfile?.languages || [
       { language: "Français", level: "Bilingue" },
@@ -64,8 +71,11 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
           setStudyLevel(prof.studyLevel || "Licence 3");
           setTargetDegree(prof.targetDegree || "Master");
           setStudyField(prof.studyField || "");
+          setUniversity(prof.university || "");
           setGpaScore(prof.gpaScore ? String(prof.gpaScore) : "");
           setLastDegreeGpa(prof.lastDegreeGpa ? String(prof.lastDegreeGpa) : "");
+          setCvUrl(prof.cvUrl || "");
+          setPhotoUrl(prof.photoUrl || "");
           if (prof.languages && prof.languages.length > 0) {
             setLanguages(prof.languages);
           }
@@ -86,7 +96,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
     if (e) e.preventDefault();
     setErrorMsg(null);
 
-    // Validation
+    // Validation for essential required fields
     if (!fullName.trim() || !countryOfOrigin.trim() || !studyField.trim() || !gpaScore) {
       setErrorMsg("Veuillez remplir toutes les informations requises avant d'enregistrer.");
       return;
@@ -111,9 +121,12 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
       studyLevel,
       targetDegree,
       studyField: studyField.trim(),
+      university: university.trim(),
       gpaScore: numericGpa,
       lastDegreeGpa: numericLastGpa,
       languages: languages.filter((l) => l.language.trim() !== ""),
+      cvUrl: cvUrl.trim(),
+      photoUrl: photoUrl.trim(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -165,29 +178,29 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
       {/* Top Banner */}
       <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-r from-card via-card to-primary/10 p-6 sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
-              <Sparkles className="h-3.5 w-3.5" /> Profil Étudiant & Matching
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Boursio" className="h-10 w-10 object-contain shrink-0" />
+            <div>
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                Profil Étudiant
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Renseignez vos véritables informations pour que l'algorithme génère vos recommandations de bourses sur-mesure.
+              </p>
             </div>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Configuration de votre Profil Étudiant
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Renseignez vos véritables informations pour que notre algorithme de scoring génère vos recommandations de bourses sur-mesure.
-            </p>
           </div>
 
           <button
             type="button"
             onClick={() => handleSaveProfile()}
             disabled={saving}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-glow transition-all hover:opacity-90 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-glow transition-all hover:opacity-90 disabled:opacity-50 shrink-0"
           >
             {saving ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : savedSuccess ? (
               <>
-                <Check className="h-4 w-4 text-accent" /> Profil Enregistré !
+                <Check className="h-4 w-4 text-accent" /> Enregistré !
               </>
             ) : (
               <>
@@ -198,11 +211,11 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
         </div>
 
         {/* Step Tabs Indicator */}
-        <div className="mt-6 flex items-center gap-2 border-t border-border/50 pt-4">
+        <div className="mt-6 flex items-center gap-2 border-t border-border/50 pt-4 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveStep(1)}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
               activeStep === 1
                 ? "bg-primary text-white shadow-sm"
                 : "bg-muted/60 text-muted-foreground hover:bg-muted"
@@ -213,7 +226,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
           <button
             type="button"
             onClick={() => setActiveStep(2)}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
               activeStep === 2
                 ? "bg-primary text-white shadow-sm"
                 : "bg-muted/60 text-muted-foreground hover:bg-muted"
@@ -224,13 +237,13 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
           <button
             type="button"
             onClick={() => setActiveStep(3)}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
               activeStep === 3
                 ? "bg-primary text-white shadow-sm"
                 : "bg-muted/60 text-muted-foreground hover:bg-muted"
             }`}
           >
-            <LanguagesIcon className="h-3.5 w-3.5" /> 3. Langues & Moyennes
+            <LanguagesIcon className="h-3.5 w-3.5" /> 3. Documents & Moyennes
           </button>
         </div>
       </div>
@@ -400,6 +413,19 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
               </div>
             </div>
 
+            <div>
+              <label className="mb-2 block text-xs font-medium text-muted-foreground">
+                Université d'Origine (Optionnel)
+              </label>
+              <input
+                type="text"
+                value={university}
+                onChange={(e) => setUniversity(e.target.value)}
+                placeholder="ex: Université Cheikh Anta Diop, Université Félix Houphouët-Boigny..."
+                className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
             <div className="flex justify-between pt-4">
               <button
                 type="button"
@@ -413,17 +439,17 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                 onClick={() => setActiveStep(3)}
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
               >
-                Suivant : Langues & Moyennes <ArrowRight className="h-4 w-4" />
+                Suivant : Documents & Moyennes <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 3: Languages & Scores */}
+        {/* Step 3: Languages, Scores & Optional Document Uploads */}
         {activeStep === 3 && (
           <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-6">
             <h2 className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-              <Award className="h-5 w-5 text-accent" /> Performance Académique & Langues Maîtrisées
+              <Award className="h-5 w-5 text-accent" /> Moyennes Académiques & Documents (Optionnel)
             </h2>
 
             <div className="grid gap-6 sm:grid-cols-2">
@@ -462,6 +488,37 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
               </div>
             </div>
 
+            {/* Optional Upload Inputs */}
+            <div className="grid gap-6 sm:grid-cols-2 pt-2 border-t border-border/60">
+              <div>
+                <label className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><FileText className="h-4 w-4 text-primary" /> Lien CV (Optionnel)</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">Drive, Dropbox...</span>
+                </label>
+                <input
+                  type="url"
+                  value={cvUrl}
+                  onChange={(e) => setCvUrl(e.target.value)}
+                  placeholder="https://drive.google.com/your-cv.pdf"
+                  className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><Camera className="h-4 w-4 text-primary" /> Photo de Profil (Optionnel)</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">URL d'image</span>
+                </label>
+                <input
+                  type="url"
+                  value={photoUrl}
+                  onChange={(e) => setPhotoUrl(e.target.value)}
+                  placeholder="https://example.com/avatar.jpg"
+                  className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+            </div>
+
             {/* Languages Section */}
             <div>
               <div className="mb-3 flex items-center justify-between">
@@ -491,7 +548,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                         updated[idx].language = e.target.value;
                         setLanguages(updated);
                       }}
-                      placeholder="Langue (ex: Français, Anglais, Espagnol...)"
+                      placeholder="Langue (ex: Français, Anglais...)"
                       className="w-full sm:w-1/2 rounded-lg border border-border bg-input px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
                     />
 

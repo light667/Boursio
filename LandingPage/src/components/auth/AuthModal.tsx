@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { loginWithEmail, registerWithEmail, loginWithGoogle } from "@/lib/firebase-auth";
-import { LogIn, UserPlus, Sparkles, AlertCircle, X } from "lucide-react";
+import { LogIn, UserPlus, AlertCircle, X } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (user: any) => void;
+  onSuccess: (user: any, mode: "login" | "register") => void;
   initialMode?: "login" | "register";
 }
 
@@ -43,7 +44,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       } else {
         user = await registerWithEmail(email, password);
       }
-      onSuccess(user);
+      onSuccess(user, mode);
       onClose();
     } catch (err: any) {
       console.error("Auth error:", err);
@@ -64,7 +65,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     try {
       const user = await loginWithGoogle();
-      onSuccess(user);
+      onSuccess(user, mode);
       onClose();
     } catch (err: any) {
       console.error("Google Auth error:", err);
@@ -79,6 +80,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-primary/20 bg-card p-6 shadow-2xl transition-all sm:p-8">
         {/* Close button */}
         <button
+          type="button"
           onClick={onClose}
           className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
@@ -87,8 +89,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Header logo & title */}
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-glow">
-            <Sparkles className="h-6 w-6 text-accent" />
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 p-2 shadow-glow">
+            <img src={logo} alt="Boursio" className="h-10 w-10 object-contain" />
           </div>
           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {mode === "login" ? "Connexion Boursio" : "Créer un compte"}

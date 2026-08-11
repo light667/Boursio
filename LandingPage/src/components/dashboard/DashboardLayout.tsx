@@ -10,7 +10,7 @@ import { MentoratView } from "./MentoratView";
 import { ProfileSetup } from "./ProfileSetup";
 import { AuthModal } from "../auth/AuthModal";
 import {
-  Sparkles,
+  Target,
   Bot,
   Bell,
   Users,
@@ -19,15 +19,15 @@ import {
   LogIn,
   Menu,
   X,
-  Globe,
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface DashboardLayoutProps {
   initialUser?: any;
   onBackToLanding?: () => void;
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, onBackToLanding }) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser }) => {
   const [currentUser, setCurrentUser] = useState<any>(initialUser || null);
   const [activeTab, setActiveTab] = useState<"recommandations" | "coach" | "alertes" | "mentorat" | "profil">(
     "recommandations"
@@ -84,18 +84,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row font-sans">
-      {/* ─── Desktop Sidebar Navigation ─────────────────────────────────── */}
-      <aside className="hidden md:flex w-64 flex-col justify-between border-r border-border bg-card p-6 shrink-0 sticky top-0 h-screen">
+      {/* ─── Desktop Fixed Left Sidebar Navigation ────────────────────── */}
+      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 flex-col justify-between border-r border-border bg-card p-6 shrink-0 z-30">
         <div className="space-y-6">
           {/* Logo & Brand Header */}
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Boursio Logo" className="h-9 w-auto" />
+            <img src={logo} alt="Boursio Logo" className="h-9 w-9 object-contain" />
             <div>
               <span className="font-display text-xl font-bold tracking-tight text-foreground">
                 Boursio
               </span>
-              <span className="block text-[10px] font-semibold text-accent uppercase tracking-wider">
-                IA & Bourses d'Études
+              <span className="block text-[10px] font-semibold text-primary uppercase tracking-wider">
+                Bourses & Orientation
               </span>
             </div>
           </div>
@@ -103,6 +103,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
           {/* Navigation Links */}
           <nav className="space-y-1.5 pt-4">
             <button
+              type="button"
               onClick={() => setActiveTab("recommandations")}
               className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
                 activeTab === "recommandations"
@@ -111,14 +112,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
               }`}
             >
               <div className="flex items-center gap-3">
-                <Sparkles className="h-4 w-4 text-accent" /> Recommandations
+                <Target className="h-4 w-4 text-primary" /> Recommandations
               </div>
-              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] text-accent">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary font-bold">
                 {bourses.length}
               </span>
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab("coach")}
               className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
                 activeTab === "coach"
@@ -127,14 +129,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
               }`}
             >
               <div className="flex items-center gap-3">
-                <Bot className="h-4 w-4 text-accent" /> Coach IA
+                <Bot className="h-4 w-4 text-primary" /> Coach IA
               </div>
-              <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] text-primary">
-                RAG
-              </span>
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab("alertes")}
               className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
                 activeTab === "alertes"
@@ -143,7 +143,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
               }`}
             >
               <div className="flex items-center gap-3">
-                <Bell className="h-4 w-4 text-accent" /> Alertes & Deadlines
+                <Bell className="h-4 w-4 text-primary" /> Alertes
               </div>
               {likedBourseIds.length > 0 && (
                 <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-500">
@@ -153,6 +153,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab("mentorat")}
               className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
                 activeTab === "mentorat"
@@ -161,11 +162,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
               }`}
             >
               <div className="flex items-center gap-3">
-                <Users className="h-4 w-4 text-accent" /> Mentorat Humain
+                <Users className="h-4 w-4 text-primary" /> Mentorat
               </div>
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab("profil")}
               className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
                 activeTab === "profil"
@@ -174,35 +176,30 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
               }`}
             >
               <div className="flex items-center gap-3">
-                <User className="h-4 w-4 text-accent" /> Mon Profil Étudiant
+                <User className="h-4 w-4 text-primary" /> Profil
               </div>
               {studentProfile ? (
-                <span className="h-2 w-2 rounded-full bg-accent" />
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
               ) : (
-                <span className="h-2 w-2 rounded-full bg-amber-400" />
+                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
               )}
             </button>
           </nav>
         </div>
-
-        {/* Back to landing page link */}
-        {onBackToLanding && (
-          <button
-            onClick={onBackToLanding}
-            className="flex w-full items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
-          >
-            <Globe className="h-3.5 w-3.5" />
-            Site Vitrine
-          </button>
-        )}
 
         {/* User Card & Logout / Login */}
         <div className="border-t border-border pt-4 space-y-3">
           {currentUser ? (
             <div className="rounded-xl border border-border bg-secondary/50 p-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-accent font-bold text-sm">
-                  {studentProfile?.fullName ? studentProfile.fullName.charAt(0).toUpperCase() : "E"}
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-primary font-bold text-sm overflow-hidden">
+                  {studentProfile?.photoUrl ? (
+                    <img src={studentProfile.photoUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : studentProfile?.fullName ? (
+                    studentProfile.fullName.charAt(0).toUpperCase()
+                  ) : (
+                    "E"
+                  )}
                 </div>
                 <div className="overflow-hidden">
                   <div className="text-xs font-bold text-foreground truncate">
@@ -215,6 +212,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
               </div>
 
               <button
+                type="button"
                 onClick={handleLogout}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
               >
@@ -223,6 +221,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
             </div>
           ) : (
             <button
+              type="button"
               onClick={() => setIsAuthModalOpen(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 py-3 text-xs font-semibold text-white shadow-glow hover:opacity-90"
             >
@@ -235,13 +234,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
       {/* ─── Mobile Header Top Navigation ──────────────────────────────── */}
       <header className="flex md:hidden items-center justify-between border-b border-border bg-card px-4 py-3 sticky top-0 z-40">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Logo" className="h-7 w-auto" />
+          <img src={logo} alt="Logo" className="h-7 w-auto" />
           <span className="font-display text-lg font-bold text-foreground">Boursio</span>
         </div>
 
         <div className="flex items-center gap-2">
           {!currentUser && (
             <button
+              type="button"
               onClick={() => setIsAuthModalOpen(true)}
               className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white"
             >
@@ -250,6 +250,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
           )}
 
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="rounded-lg border border-border bg-card p-1.5 text-foreground"
           >
@@ -262,68 +263,64 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-border bg-card p-4 space-y-2 animate-in slide-in-from-top-2">
           <button
+            type="button"
             onClick={() => {
               setActiveTab("recommandations");
               setMobileMenuOpen(false);
             }}
             className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
           >
-            <Sparkles className="h-4 w-4 text-accent" /> Recommandations ({bourses.length})
+            <Target className="h-4 w-4 text-primary" /> Recommandations ({bourses.length})
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab("coach");
               setMobileMenuOpen(false);
             }}
             className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
           >
-            <Bot className="h-4 w-4 text-accent" /> Coach IA Assistant
+            <Bot className="h-4 w-4 text-primary" /> Coach IA
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab("alertes");
               setMobileMenuOpen(false);
             }}
             className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
           >
-            <Bell className="h-4 w-4 text-accent" /> Alertes & Notifications
+            <Bell className="h-4 w-4 text-primary" /> Alertes
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab("mentorat");
               setMobileMenuOpen(false);
             }}
             className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
           >
-            <Users className="h-4 w-4 text-accent" /> Mentorat Humain
+            <Users className="h-4 w-4 text-primary" /> Mentorat
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab("profil");
               setMobileMenuOpen(false);
             }}
             className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
           >
-            <User className="h-4 w-4 text-accent" /> Mon Profil Étudiant
+            <User className="h-4 w-4 text-primary" /> Profil
           </button>
-
-          {onBackToLanding && (
-            <button
-              onClick={onBackToLanding}
-              className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary"
-            >
-              <Globe className="h-4 w-4" /> Site Vitrine
-            </button>
-          )}
         </div>
       )}
 
-      {/* ─── Main Content Viewport ─────────────────────────────────────── */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8 mb-16 md:mb-0 overflow-y-auto max-w-7xl">
+      {/* ─── Main Right Scroll Viewport (Desktop ml-64, overflow-y-auto) ─ */}
+      <main className="flex-1 md:ml-64 p-4 sm:p-6 md:p-8 mb-16 md:mb-0 overflow-y-auto max-w-7xl h-screen">
         {activeTab === "recommandations" && (
           <RecommandationsView
             bourses={bourses}
@@ -358,27 +355,30 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
       {/* ─── Mobile Bottom Navigation Bar ──────────────────────────────── */}
       <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-2 py-2 justify-around">
         <button
+          type="button"
           onClick={() => setActiveTab("recommandations")}
           className={`flex flex-col items-center gap-1 text-[10px] font-medium ${
-            activeTab === "recommandations" ? "text-accent" : "text-muted-foreground"
+            activeTab === "recommandations" ? "text-primary font-bold" : "text-muted-foreground"
           }`}
         >
-          <Sparkles className="h-5 w-5" /> Match
+          <Target className="h-5 w-5" /> Match
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab("coach")}
           className={`flex flex-col items-center gap-1 text-[10px] font-medium ${
-            activeTab === "coach" ? "text-accent" : "text-muted-foreground"
+            activeTab === "coach" ? "text-primary font-bold" : "text-muted-foreground"
           }`}
         >
           <Bot className="h-5 w-5" /> Coach IA
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab("alertes")}
           className={`flex flex-col items-center gap-1 text-[10px] font-medium relative ${
-            activeTab === "alertes" ? "text-accent" : "text-muted-foreground"
+            activeTab === "alertes" ? "text-primary font-bold" : "text-muted-foreground"
           }`}
         >
           <Bell className="h-5 w-5" /> Alertes
@@ -388,18 +388,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab("mentorat")}
           className={`flex flex-col items-center gap-1 text-[10px] font-medium ${
-            activeTab === "mentorat" ? "text-accent" : "text-muted-foreground"
+            activeTab === "mentorat" ? "text-primary font-bold" : "text-muted-foreground"
           }`}
         >
-          <Users className="h-5 w-5" /> Mentors
+          <Users className="h-5 w-5" /> Mentorat
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab("profil")}
           className={`flex flex-col items-center gap-1 text-[10px] font-medium ${
-            activeTab === "profil" ? "text-accent" : "text-muted-foreground"
+            activeTab === "profil" ? "text-primary font-bold" : "text-muted-foreground"
           }`}
         >
           <User className="h-5 w-5" /> Profil
@@ -410,16 +412,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={(usr) => {
+        onSuccess={(usr, mode) => {
           setCurrentUser(usr);
           setIsAuthModalOpen(false);
           getProfileFromSupabase(usr.uid).then((prof) => {
-            if (prof && prof.fullName) {
+            if (mode === "register" || !prof || !prof.fullName) {
+              // Registration or missing profile -> Force profile setup first
+              setStudentProfile(prof);
+              setActiveTab("profil");
+            } else {
+              // Existing login with profile -> Go straight to recommendations
               setStudentProfile(prof);
               setActiveTab("recommandations");
-            } else {
-              setStudentProfile(null);
-              setActiveTab("profil");
             }
           });
         }}

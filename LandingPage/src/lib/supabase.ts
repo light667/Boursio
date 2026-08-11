@@ -37,30 +37,36 @@ export async function saveProfileToSupabase(profile: StudentProfile): Promise<bo
   try {
     // 1. Save to local storage cache for instant offline responsiveness
     const existing = localStorage.getItem(STORAGE_KEYS.PROFILE);
-    const profiles = existing ? JSON.parse(existing) : {};
-    profiles[profile.userId] = {
+    const profilesMap = existing ? JSON.parse(existing) : {};
+    profilesMap[profile.userId] = {
       ...profile,
       updatedAt: new Date().toISOString(),
     };
-    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profiles));
+    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profilesMap));
 
-    // 2. Sync to Supabase REST API endpoint (upsert)
-    await supabaseFetch("user_profiles", {
+    // 2. Sync to Supabase `profiles` table (POST / upsert)
+    const payload = {
+      firebase_uid: profile.userId,
+      full_name: profile.fullName,
+      birth_date: profile.dateOfBirth || null,
+      nationality: profile.countryOfOrigin || "",
+      country: profile.countryOfResidence || "",
+      education_level: profile.studyLevel,
+      field_of_study: profile.studyField,
+      university: profile.university || "",
+      gpa: profile.gpaScore,
+      french_level: profile.frenchLevel || (profile.languages?.find((l) => l.language.toLowerCase().includes("fran"))?.level || "Bilingue"),
+      english_level: profile.englishLevel || (profile.languages?.find((l) => l.language.toLowerCase().includes("ang"))?.level || "Intermédiaire"),
+      target_fields: profile.targetFields || [profile.targetDegree],
+      academic_goals: profile.academicGoals || "",
+      cv_url: profile.cvUrl || "",
+      photo_url: profile.photoUrl || "",
+      avatar_url: profile.photoUrl || "",
+    };
+
+    await supabaseFetch("profiles", {
       method: "POST",
-      body: JSON.stringify({
-        user_id: profile.userId,
-        full_name: profile.fullName,
-        date_of_birth: profile.dateOfBirth,
-        country_of_origin: profile.countryOfOrigin,
-        country_of_residence: profile.countryOfResidence,
-        study_level: profile.studyLevel,
-        target_degree: profile.targetDegree,
-        study_field: profile.studyField,
-        gpa_score: profile.gpaScore,
-        last_degree_gpa: profile.lastDegreeGpa,
-        languages: profile.languages,
-        updated_at: new Date().toISOString(),
-      }),
+      body: JSON.stringify(payload),
     });
 
     return true;
@@ -71,42 +77,54 @@ export async function saveProfileToSupabase(profile: StudentProfile): Promise<bo
 }
 
 export async function getProfileFromSupabase(userId: string): Promise<StudentProfile | null> {
+  if (!userId) return null;
+
   try {
-    // Try Supabase first
-    const remoteData = await supabaseFetch(`user_profiles?user_id=eq.${userId}&select=*`);
+    // 1. Try Supabase profiles table first
+    const remoteData = await supabaseFetch(`profiles?firebase_uid=eq.${userId}&select=*`);
     if (Array.isArray(remoteData) && remoteData.length > 0) {
       const row = remoteData[0];
       return {
-        userId: row.user_id || userId,
-        fullName: row.full_name,
-        dateOfBirth: row.date_of_birth,
-        countryOfOrigin: row.country_of_origin,
-        countryOfResidence: row.country_of_residence,
-        studyLevel: row.study_level,
-        targetDegree: row.target_degree,
-        studyField: row.study_field,
-        gpaScore: row.gpa_score,
-        lastDegreeGpa: row.last_degree_gpa,
-        languages: row.languages || [],
-        updatedAt: row.updated_at,
+        userId: row.firebase_uid || userId,
+        fullName: row.full_name || "",
+        dateOfBirth: row.birth_date || "",
+        countryOfOrigin: row.nationality || "",
+        countryOfResidence: row.country || "",
+        studyLevel: row.education_level || "Licence 3",
+        targetDegree: Array.isArray(row.target_fields) && row.target_fields.length > 0 ? row.target_fields[0] : "Master",
+        studyField: row.field_of_study || "",
+        university: row.university || "",
+        gpaScore: row.gpa ? Number(row.gpa) : 0,
+        lastDegreeGpa: row.gpa ? Number(row.gpa) : 0,
+        frenchLevel: row.french_level,
+        englishLevel: row.english_level,
+        languages: [
+          { language: "Français", level: row.french_level || "Bilingue" },
+          { language: "Anglais", level: row.english_level || "Intermédiaire" },
+        ],
+        cvUrl: row.cv_url,
+        photoUrl: row.photo_url || row.avatar_url,
+        updatedAt: row.created_at,
       };
     }
   } catch (err) {
     console.warn("Using cached profile fallback");
   }
 
-  // Local storage fallback
+  // 2. Local storage fallback
   try {
     const existing = localStorage.getItem(STORAGE_KEYS.PROFILE);
     if (!existing) return null;
-    const profiles = JSON.parse(existing);
-    return profiles[userId] || null;
+    const profilesMap = JSON.parse(existing);
+    return profilesMap[userId] || null;
   } catch {
     return null;
   }
 }
 
 export async function toggleLikeScholarship(userId: string, bourseId: string): Promise<boolean> {
+  if (!userId) return false;
+
   try {
     const existing = localStorage.getItem(STORAGE_KEYS.LIKES);
     const likesMap: Record<string, string[]> = existing ? JSON.parse(existing) : {};
@@ -123,11 +141,11 @@ export async function toggleLikeScholarship(userId: string, bourseId: string): P
 
     localStorage.setItem(STORAGE_KEYS.LIKES, JSON.stringify(likesMap));
 
-    // Optional Supabase REST sync
+    // Sync with Supabase swipes table if liked
     if (isLiked) {
-      supabaseFetch("user_likes", {
+      supabaseFetch("swipes", {
         method: "POST",
-        body: JSON.stringify({ user_id: userId, bourse_id: bourseId }),
+        body: JSON.stringify({ firebase_uid: userId, bourse_id: bourseId, action: "like" }),
       });
     }
 
@@ -139,6 +157,7 @@ export async function toggleLikeScholarship(userId: string, bourseId: string): P
 }
 
 export async function getUserLikedBourses(userId: string): Promise<string[]> {
+  if (!userId) return [];
   try {
     const existing = localStorage.getItem(STORAGE_KEYS.LIKES);
     if (!existing) return [];
@@ -150,55 +169,23 @@ export async function getUserLikedBourses(userId: string): Promise<string[]> {
 }
 
 export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
+  if (!userId) return [];
   try {
     const existing = localStorage.getItem(STORAGE_KEYS.NOTIFS);
-    if (!existing) return getInitialNotifications(userId);
+    if (!existing) return [];
     const notifsMap: Record<string, UserNotification[]> = JSON.parse(existing);
-    return notifsMap[userId] || getInitialNotifications(userId);
+    return notifsMap[userId] || [];
   } catch {
-    return getInitialNotifications(userId);
+    return [];
   }
 }
 
 export async function markNotificationAsRead(userId: string, notifId: string): Promise<void> {
+  if (!userId) return;
   const notifs = await getUserNotifications(userId);
   const updated = notifs.map((n) => (n.id === notifId ? { ...n, read: true } : n));
   const existing = localStorage.getItem(STORAGE_KEYS.NOTIFS);
   const notifsMap: Record<string, UserNotification[]> = existing ? JSON.parse(existing) : {};
   notifsMap[userId] = updated;
   localStorage.setItem(STORAGE_KEYS.NOTIFS, JSON.stringify(notifsMap));
-}
-
-function getInitialNotifications(userId: string): UserNotification[] {
-  return [
-    {
-      id: "notif-1",
-      userId,
-      title: "Rappel de Deadline Bourse",
-      message: "La bourse 'Rhodes Kenya Scholarships' expire le 27 août 2026. Soumettez votre dossier à temps !",
-      type: "deadline",
-      bourseId: "fly_052b5c453eadfe",
-      read: false,
-      date: "Aujourd'hui à 09:30",
-    },
-    {
-      id: "notif-2",
-      userId,
-      title: "Nouvelle Bourse Recommandée (98% Match)",
-      message: "Une nouvelle bourse en Informatique & IA à Stanford correspond parfaitement à votre profil.",
-      type: "recommendation",
-      bourseId: "fly_0f17e924592da4",
-      read: false,
-      date: "Hier à 14:15",
-    },
-    {
-      id: "notif-3",
-      userId,
-      title: "Conseil Coach IA",
-      message: "Le Coach IA a mis à jour votre modèle de Lettre de Motivation pour les universités canadiennes.",
-      type: "system",
-      read: true,
-      date: "Il y a 3 jours",
-    },
-  ];
 }

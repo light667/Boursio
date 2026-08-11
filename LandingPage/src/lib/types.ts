@@ -1,19 +1,27 @@
 export interface StudentProfile {
   id?: string;
-  userId: string;
-  fullName: string;
-  dateOfBirth: string;
-  countryOfOrigin: string;
-  countryOfResidence: string;
-  studyLevel: string; // e.g. "Baccalauréat", "Licence 1", "Licence 2", "Licence 3", "Master 1", "Master 2", "Doctorat"
-  targetDegree: string; // e.g. "Licence", "Master", "Doctorat", "Recherche", "Formation"
-  studyField: string; // Filière d'étude (e.g. Informatique, Médecine, Ingénierie, Droit...)
-  gpaScore: number; // Moyenne générale (e.g. 15.5 / 20)
+  userId: string; // Maps to firebase_uid
+  fullName: string; // full_name
+  dateOfBirth: string; // birth_date
+  countryOfOrigin: string; // nationality
+  countryOfResidence: string; // country
+  studyLevel: string; // education_level e.g. "Baccalauréat", "Licence 1", "Licence 2", "Licence 3", "Master 1", "Master 2", "Doctorat"
+  targetDegree: string; // e.g. "Licence", "Master", "Doctorat", "Recherche"
+  studyField: string; // field_of_study (e.g. Informatique, Médecine...)
+  university?: string; // university
+  gpaScore: number; // gpa (e.g. 15.5 / 20)
+  lastDegreeGpa?: number; // Moyenne du dernier diplôme
+  frenchLevel?: string; // french_level
+  englishLevel?: string; // english_level
   languages: {
     language: string;
     level: "Débutant" | "Intermédiaire" | "Avancé" | "Bilingue" | "C1/C2" | "B1/B2";
   }[];
-  lastDegreeGpa: number; // Moyenne du dernier diplôme
+  targetCountries?: string[]; // target_countries
+  targetFields?: string[]; // target_fields
+  academicGoals?: string; // academic_goals
+  cvUrl?: string; // cv_url (Optional CV link)
+  photoUrl?: string; // photo_url / avatar_url (Optional avatar link)
   updatedAt?: string;
 }
 
@@ -74,17 +82,16 @@ export interface UserNotification {
   date: string;
 }
 
-export interface Mentor {
+export interface ChatSession {
   id: string;
-  name: string;
-  title: string;
-  universityOrCompany: string;
-  country: string;
-  scholarshipsWon: string[];
-  specialties: string[];
-  avatar: string;
-  rating: number;
-  reviewsCount: number;
-  available: boolean;
-  bio: string;
+  userId: string;
+  createdAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
 }

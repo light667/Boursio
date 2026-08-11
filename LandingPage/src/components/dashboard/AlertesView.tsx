@@ -5,14 +5,15 @@ import {
   Bell,
   CheckCircle,
   Calendar,
-  Sparkles,
   Mail,
   Smartphone,
   Heart,
   Clock,
   ExternalLink,
   Sliders,
+  Info,
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface AlertesViewProps {
   userId: string;
@@ -26,7 +27,9 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
   const [frequency, setFrequency] = useState<"daily" | "weekly">("daily");
 
   useEffect(() => {
-    getUserNotifications(userId).then(setNotifications);
+    if (userId) {
+      getUserNotifications(userId).then(setNotifications);
+    }
   }, [userId]);
 
   const handleMarkAsRead = async (id: string) => {
@@ -39,17 +42,15 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Top Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-r from-card via-secondary/40 to-primary/10 p-6 sm:p-8">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-r from-card via-card to-primary/10 p-6 sm:p-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-accent shadow-glow">
-            <Bell className="h-6 w-6" />
-          </div>
+          <img src={logo} alt="Boursio" className="h-10 w-10 object-contain shrink-0" />
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-              Alertes & Notifications Personnalisées
+              Alertes & Deadlines
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ne ratez plus aucune deadline. Recevez des notifications ciblées sur vos bourses favoris et nouvelles opportunités.
+              Recevez des notifications ciblées sur vos bourses favorites et les dates limites importantes.
             </p>
           </div>
         </div>
@@ -58,7 +59,7 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
       {/* Notification Settings Bar */}
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
         <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-          <Sliders className="h-4 w-4 text-accent" /> Canaux d'Alerte et Fréquence
+          <Sliders className="h-4 w-4 text-primary" /> Canaux d'Alerte et Fréquence
         </h3>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -68,7 +69,7 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
               <Mail className="h-5 w-5 text-primary" />
               <div>
                 <div className="text-xs font-semibold text-foreground">Alertes par E-mail</div>
-                <div className="text-[11px] text-muted-foreground">Recevez les récapitulatifs</div>
+                <div className="text-[11px] text-muted-foreground">Récapitulatif des deadlines</div>
               </div>
             </div>
             <input
@@ -82,7 +83,7 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
           {/* Push Phone Toggle */}
           <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/50 p-4">
             <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-accent" />
+              <Smartphone className="h-5 w-5 text-primary" />
               <div>
                 <div className="text-xs font-semibold text-foreground">Notifications Mobile</div>
                 <div className="text-[11px] text-muted-foreground">Alertes directes smartphone</div>
@@ -92,7 +93,7 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
               type="checkbox"
               checked={pushNotifs}
               onChange={(e) => setPushNotifs(e.target.checked)}
-              className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-accent"
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary"
             />
           </div>
 
@@ -111,7 +112,7 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
         </div>
       </div>
 
-      {/* Liked Scholarships Deadline Watchlist */}
+      {/* Liked Scholarships Watchlist */}
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
@@ -121,9 +122,12 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
         </div>
 
         {likedBourses.length === 0 ? (
-          <p className="text-xs text-muted-foreground italic py-4 text-center">
-            Vous n'avez pas encore liké de bourse. Cliquez sur le cœur ❤️ d'une bourse dans l'onglet Recommandations pour l'ajouter à vos alertes.
-          </p>
+          <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
+            <Info className="h-8 w-8 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground max-w-sm">
+              Vous n'avez pas encore aimé de bourse. Cliquez sur le cœur d'une bourse dans les Recommandations pour l'ajouter à votre liste de suivi.
+            </p>
+          </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {likedBourses.map((b) => (
@@ -155,65 +159,67 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
       {/* Notifications Feed */}
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
         <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-          <Clock className="h-4 w-4 text-primary" /> Flux de Notifications Récentes
+          <Clock className="h-4 w-4 text-primary" /> Notifications
         </h3>
 
-        <div className="space-y-3">
-          {notifications.map((notif) => (
-            <div
-              key={notif.id}
-              onClick={() => handleMarkAsRead(notif.id)}
-              className={`flex items-start justify-between rounded-xl border p-4 transition-all cursor-pointer ${
-                notif.read
-                  ? "border-border bg-secondary/20 text-muted-foreground"
-                  : "border-primary/30 bg-primary/5 text-foreground shadow-sm"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                    notif.type === "deadline"
-                      ? "bg-rose-500/20 text-rose-500"
-                      : notif.type === "recommendation"
-                      ? "bg-accent/20 text-accent"
-                      : "bg-primary/20 text-primary"
-                  }`}
-                >
-                  {notif.type === "deadline" ? (
-                    <Calendar className="h-4 w-4" />
-                  ) : notif.type === "recommendation" ? (
-                    <Sparkles className="h-4 w-4" />
-                  ) : (
-                    <Bell className="h-4 w-4" />
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-foreground">{notif.title}</h4>
-                    {!notif.read && (
-                      <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+        {notifications.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            Aucune notification récente. Vos prochaines alertes apparaîtront ici.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {notifications.map((notif) => (
+              <div
+                key={notif.id}
+                onClick={() => handleMarkAsRead(notif.id)}
+                className={`flex items-start justify-between rounded-xl border p-4 transition-all cursor-pointer ${
+                  notif.read
+                    ? "border-border bg-secondary/20 text-muted-foreground"
+                    : "border-primary/30 bg-primary/5 text-foreground shadow-sm"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                      notif.type === "deadline"
+                        ? "bg-rose-500/20 text-rose-500"
+                        : "bg-primary/20 text-primary"
+                    }`}
+                  >
+                    {notif.type === "deadline" ? (
+                      <Calendar className="h-4 w-4" />
+                    ) : (
+                      <Bell className="h-4 w-4" />
                     )}
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    {notif.message}
-                  </p>
-                  <span className="mt-2 block text-[10px] opacity-60">{notif.date}</span>
-                </div>
-              </div>
 
-              {!notif.read && (
-                <button
-                  type="button"
-                  title="Marquer comme lu"
-                  className="p-1 text-muted-foreground hover:text-accent"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-bold text-foreground">{notif.title}</h4>
+                      {!notif.read && (
+                        <span className="h-2 w-2 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {notif.message}
+                    </p>
+                    <span className="mt-2 block text-[10px] opacity-60">{notif.date}</span>
+                  </div>
+                </div>
+
+                {!notif.read && (
+                  <button
+                    type="button"
+                    title="Marquer comme lu"
+                    className="p-1 text-muted-foreground hover:text-primary"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import { Bourse, StudentProfile } from "@/lib/types";
 import { rankBoursesForStudent } from "@/lib/matchingEngine";
 import { toggleLikeScholarship } from "@/lib/supabase";
 import {
-  Sparkles,
   Heart,
   ExternalLink,
   Bot,
@@ -14,10 +13,11 @@ import {
   DollarSign,
   MapPin,
   X,
-  Info,
   ChevronRight,
   Crown,
+  Percent,
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface RecommandationsViewProps {
   bourses: Bourse[];
@@ -95,34 +95,34 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner / Match Summary */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-card via-secondary/40 to-primary/10 p-6 sm:p-8">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-card via-card to-primary/10 p-6 sm:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
-              <Sparkles className="h-3.5 w-3.5" /> Algorithme de Scoring IA Actif
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Boursio" className="h-10 w-10 object-contain shrink-0" />
+            <div>
+              <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
+                Recommandations de Bourses
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {studentProfile ? (
+                  <>
+                    Matching calculé pour{" "}
+                    <span className="font-medium text-foreground">{studentProfile.fullName}</span> (
+                    {studentProfile.studyLevel} en {studentProfile.studyField})
+                  </>
+                ) : (
+                  "Complétez votre profil pour afficher un score de pertinence personnalisé."
+                )}
+              </p>
             </div>
-            <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-              Vos Recommandations de Bourses
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {studentProfile ? (
-                <>
-                  Comparaison effectuée pour{" "}
-                  <span className="font-medium text-foreground">{studentProfile.fullName}</span> (
-                  {studentProfile.studyLevel} en {studentProfile.studyField})
-                </>
-              ) : (
-                "Bourses triées par pertinence générale. Complétez votre profil pour un matching personnalisé."
-              )}
-            </p>
           </div>
 
           {!studentProfile && (
             <button
               onClick={onOpenProfileSetup}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-xs font-bold text-accent-foreground shadow-glow hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-glow hover:opacity-90 shrink-0"
             >
-              <Sparkles className="h-4 w-4" /> Configurer mon Profil Étudiant
+              Configurer mon Profil
             </button>
           )}
         </div>
@@ -172,12 +172,9 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
         </div>
       </div>
 
-      {/* Results Count & Match Status */}
+      {/* Results Count */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{filteredBourses.length} bourses trouvées et ordonnées par pertinence</span>
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-accent animate-pulse" /> Algorithme à jour
-        </span>
+        <span>{filteredBourses.length} bourses trouvées</span>
       </div>
 
       {/* Scholarships Grid */}
@@ -197,15 +194,15 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                 <div className="mb-4 flex items-start justify-between gap-3">
                   {/* Match Percentage Badge */}
                   <div
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${
                       matchScore >= 80
-                        ? "bg-accent/15 text-accent border border-accent/30"
+                        ? "bg-primary/15 text-primary border border-primary/30"
                         : matchScore >= 60
-                        ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                        ? "bg-blue-500/15 text-blue-500 border border-blue-500/30"
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <Percent className="h-3 w-3" />
                     <span>{matchScore}% Match</span>
                   </div>
 
@@ -240,12 +237,12 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                 {/* Badges / Domains & Levels */}
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {bourse.financement === "TOTAL" && (
-                    <span className="rounded-md bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400 border border-emerald-500/30">
+                    <span className="rounded-md bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                       Totalement Financée
                     </span>
                   )}
                   {bourse.africains_eligibles && (
-                    <span className="rounded-md bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-400 border border-amber-500/30">
+                    <span className="rounded-md bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/30">
                       Afrique Éligible
                     </span>
                   )}
@@ -269,7 +266,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                 {bourse.matchReasons && bourse.matchReasons.length > 0 && (
                   <div className="mt-4 rounded-xl border border-primary/10 bg-primary/5 p-2.5 space-y-1">
                     {bourse.matchReasons.slice(0, 2).map((reason, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 text-[11px] text-accent">
+                      <div key={idx} className="flex items-center gap-1.5 text-[11px] text-primary">
                         <CheckCircle2 className="h-3 w-3 shrink-0" />
                         <span className="line-clamp-1">{reason}</span>
                       </div>
@@ -286,8 +283,8 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                     {bourse.deadline_raw || bourse.deadline || "Date non spécifiée"}
                   </span>
                   {bourse.montant_bourse && (
-                    <span className="font-semibold text-accent flex items-center gap-0.5">
-                      <DollarSign className="h-3.5 w-3.5" /> {bourse.montant_bourse}
+                    <span className="font-semibold text-foreground flex items-center gap-0.5">
+                      <DollarSign className="h-3.5 w-3.5 text-primary" /> {bourse.montant_bourse}
                     </span>
                   )}
                 </div>
@@ -308,11 +305,11 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                   <button
                     type="button"
                     onClick={(e) => handleApplyWithAI(bourse.titre, e)}
-                    className="relative group/pro inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary/90 to-blue-600 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-all overflow-hidden"
+                    className="relative group/pro inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-blue-600 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-all overflow-hidden"
                   >
-                    <Bot className="h-3.5 w-3.5 text-accent" /> Postuler avec l'Agent IA
+                    <Bot className="h-3.5 w-3.5 text-white" /> Postuler avec l'Agent IA
                     {/* PRO Badge */}
-                    <span className="absolute -top-1 -right-1 flex h-5 items-center gap-0.5 rounded-bl-lg rounded-tr-xl bg-gradient-to-r from-amber-400 to-amber-600 px-1.5 text-[9px] font-extrabold uppercase text-slate-950 shadow-sm">
+                    <span className="absolute -top-1 -right-1 flex h-5 items-center gap-0.5 rounded-bl-lg rounded-tr-xl bg-amber-500 px-1.5 text-[9px] font-extrabold uppercase text-slate-950 shadow-sm">
                       <Crown className="h-2.5 w-2.5" /> PRO
                     </span>
                   </button>
@@ -328,6 +325,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-primary/20 bg-card p-6 shadow-2xl sm:p-8 space-y-6">
             <button
+              type="button"
               onClick={() => setSelectedBourse(null)}
               className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-muted"
             >
@@ -336,11 +334,11 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-bold text-accent border border-accent/30">
+                <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold text-primary border border-primary/30">
                   {selectedBourse.matchScore}% Correspondance
                 </span>
                 {selectedBourse.financement === "TOTAL" && (
-                  <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-400 border border-emerald-500/30">
+                  <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                     Bourse Totale
                   </span>
                 )}
@@ -359,12 +357,12 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
             {Array.isArray(selectedBourse.couverture) && selectedBourse.couverture.length > 0 && (
               <div className="rounded-xl border border-border bg-secondary/50 p-4 space-y-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                  <DollarSign className="h-4 w-4 text-accent" /> Couverture Financière & Avantages
+                  <DollarSign className="h-4 w-4 text-primary" /> Couverture Financière & Avantages
                 </h4>
                 <ul className="space-y-1.5 text-xs text-muted-foreground">
                   {selectedBourse.couverture.map((c, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-accent shrink-0 mt-0.5" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                       <span>{c}</span>
                     </li>
                   ))}
@@ -413,7 +411,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                 href={selectedBourse.lien_candidature || selectedBourse.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-xs font-semibold text-white hover:bg-primary/90"
               >
                 Accéder au Site Officiel <ExternalLink className="h-4 w-4" />
               </a>
@@ -427,18 +425,19 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-amber-500/30 bg-card p-6 text-center shadow-2xl sm:p-8 space-y-4">
             <button
+              type="button"
               onClick={() => setShowProModal(false)}
               className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-muted"
             >
               <X className="h-5 w-5" />
             </button>
 
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 shadow-glow">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-slate-950 shadow-glow">
               <Crown className="h-8 w-8" />
             </div>
 
             <div className="space-y-1">
-              <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-400 border border-amber-500/20">
+              <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
                 Option Pro Boursio
               </span>
               <h3 className="font-display text-xl font-bold text-foreground">
@@ -457,7 +456,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
 
             <div className="rounded-xl border border-border bg-secondary/50 p-3 text-left text-xs space-y-1.5 text-muted-foreground">
               <div className="flex items-center gap-2 text-foreground font-semibold">
-                <Bot className="h-4 w-4 text-accent" /> Fonctionnalités Pro en préparation :
+                <Bot className="h-4 w-4 text-primary" /> Fonctionnalités Pro en préparation :
               </div>
               <div>• Soumission automatisée des dossiers</div>
               <div>• Génération dynamique des pièces manquantes</div>

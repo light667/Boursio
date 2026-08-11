@@ -17,8 +17,6 @@ import {
   User,
   LogOut,
   LogIn,
-  Menu,
-  X,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -36,7 +34,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
   const [likedBourseIds, setLikedBourseIds] = useState<string[]>([]);
   const [bourses, setBourses] = useState<Bourse[]>([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Subscribe to Firebase Auth state
   useEffect(() => {
@@ -231,95 +228,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
         </div>
       </aside>
 
-      {/* ─── Mobile Header Top Navigation ──────────────────────────────── */}
-      <header className="flex md:hidden items-center justify-between border-b border-border bg-card px-4 py-3 sticky top-0 z-40">
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="Logo" className="h-7 w-auto" />
-          <span className="font-display text-lg font-bold text-foreground">Boursio</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {!currentUser && (
-            <button
-              type="button"
-              onClick={() => setIsAuthModalOpen(true)}
-              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white"
-            >
-              Connexion
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg border border-border bg-card p-1.5 text-foreground"
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-b border-border bg-card p-4 space-y-2 animate-in slide-in-from-top-2">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("recommandations");
-              setMobileMenuOpen(false);
-            }}
-            className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
-          >
-            <Target className="h-4 w-4 text-primary" /> Recommandations ({bourses.length})
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("coach");
-              setMobileMenuOpen(false);
-            }}
-            className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
-          >
-            <Bot className="h-4 w-4 text-primary" /> Coach IA
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("alertes");
-              setMobileMenuOpen(false);
-            }}
-            className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
-          >
-            <Bell className="h-4 w-4 text-primary" /> Alertes
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("mentorat");
-              setMobileMenuOpen(false);
-            }}
-            className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
-          >
-            <Users className="h-4 w-4 text-primary" /> Mentorat
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("profil");
-              setMobileMenuOpen(false);
-            }}
-            className="w-full flex items-center gap-3 rounded-lg p-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
-          >
-            <User className="h-4 w-4 text-primary" /> Profil
-          </button>
-        </div>
-      )}
-
-      {/* ─── Main Right Scroll Viewport (Desktop ml-64, overflow-y-auto) ─ */}
+      {/* ─── Main Right Scroll Viewport (Desktop ml-64, Mobile full width with bottom nav) ─ */}
       <main className="flex-1 md:ml-64 p-4 sm:p-6 md:p-8 mb-16 md:mb-0 overflow-y-auto max-w-7xl h-screen">
         {activeTab === "recommandations" && (
           <RecommandationsView
@@ -417,11 +326,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
           setIsAuthModalOpen(false);
           getProfileFromSupabase(usr.uid).then((prof) => {
             if (mode === "register" || !prof || !prof.fullName) {
-              // Registration or missing profile -> Force profile setup first
               setStudentProfile(prof);
               setActiveTab("profil");
             } else {
-              // Existing login with profile -> Go straight to recommendations
               setStudentProfile(prof);
               setActiveTab("recommandations");
             }

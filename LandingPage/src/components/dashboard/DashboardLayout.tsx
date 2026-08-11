@@ -8,6 +8,7 @@ import { CoachIAView } from "./CoachIAView";
 import { AlertesView } from "./AlertesView";
 import { MentoratView } from "./MentoratView";
 import { ProfileSetup } from "./ProfileSetup";
+import { SettingsView } from "./SettingsView";
 import { AuthModal } from "../auth/AuthModal";
 import {
   Target,
@@ -15,10 +16,13 @@ import {
   Bell,
   Users,
   User,
+  Settings,
   LogOut,
   LogIn,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+
+type Tab = "recommandations" | "coach" | "alertes" | "mentorat" | "profil" | "parametres";
 
 interface DashboardLayoutProps {
   initialUser?: any;
@@ -27,25 +31,20 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser }) => {
   const [currentUser, setCurrentUser] = useState<any>(initialUser || null);
-  const [activeTab, setActiveTab] = useState<"recommandations" | "coach" | "alertes" | "mentorat" | "profil">(
-    "recommandations"
-  );
+  const [activeTab, setActiveTab] = useState<Tab>("recommandations");
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [likedBourseIds, setLikedBourseIds] = useState<string[]>([]);
   const [bourses, setBourses] = useState<Bourse[]>([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Subscribe to Firebase Auth state
   useEffect(() => {
     const unsubscribe = subscribeAuthState((user) => {
       if (user) {
         setCurrentUser(user);
-        // Fetch profile from Supabase for authenticated user
         getProfileFromSupabase(user.uid).then((prof) => {
           if (prof && prof.fullName) {
             setStudentProfile(prof);
           } else {
-            // If profile does not exist yet, force user to complete profile first
             setStudentProfile(null);
             setActiveTab("profil");
           }
@@ -54,21 +53,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
       } else {
         setCurrentUser(null);
         setStudentProfile(null);
-        // If not logged in, prompt login modal
         setIsAuthModalOpen(true);
       }
     });
-
     return () => unsubscribe();
   }, []);
 
-  // Load active scholarships
   useEffect(() => {
-    const data = getAllBourses();
-    setBourses(data);
+    setBourses(getAllBourses());
   }, []);
 
-  const userId = currentUser ? currentUser.uid : "";
+  const userId = currentUser?.uid ?? "";
 
   const handleLogout = async () => {
     await logoutUser();
@@ -79,117 +74,92 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
 
   const likedBoursesList = bourses.filter((b) => likedBourseIds.includes(b.id));
 
+  // Navigation items definition — shared between sidebar and bottom nav
+  const NAV_ITEMS: { tab: Tab; label: string; Icon: React.FC<any>; badge?: React.ReactNode }[] = [
+    {
+      tab: "recommandations",
+      label: "Recommandations",
+      Icon: Target,
+      badge: (
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary font-bold">
+          {bourses.length}
+        </span>
+      ),
+    },
+    { tab: "coach", label: "Coach IA", Icon: Bot },
+    {
+      tab: "alertes",
+      label: "Alertes",
+      Icon: Bell,
+      badge:
+        likedBourseIds.length > 0 ? (
+          <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-500">
+            {likedBourseIds.length}
+          </span>
+        ) : undefined,
+    },
+    { tab: "mentorat", label: "Mentorat", Icon: Users },
+    {
+      tab: "profil",
+      label: "Profil",
+      Icon: User,
+      badge: studentProfile ? (
+        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+      ) : (
+        <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+      ),
+    },
+    { tab: "parametres", label: "Paramètres", Icon: Settings },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row font-sans">
-      {/* ─── Desktop Fixed Left Sidebar Navigation ────────────────────── */}
+      {/* ─── Desktop Fixed Left Sidebar ────────────────────────────────── */}
       <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 flex-col justify-between border-r border-border bg-card p-6 shrink-0 z-30">
         <div className="space-y-6">
-          {/* Logo & Brand Header */}
+          {/* Logo & Brand */}
           <div className="flex items-center gap-3">
             <img src={logo} alt="Boursio Logo" className="h-9 w-9 object-contain" />
             <div>
-              <span className="font-display text-xl font-bold tracking-tight text-foreground">
-                Boursio
-              </span>
+              <span className="font-display text-xl font-bold tracking-tight text-foreground">Boursio</span>
               <span className="block text-[10px] font-semibold text-primary uppercase tracking-wider">
                 Bourses & Orientation
               </span>
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="space-y-1.5 pt-4">
-            <button
-              type="button"
-              onClick={() => setActiveTab("recommandations")}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
-                activeTab === "recommandations"
-                  ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-glow"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Target className="h-4 w-4 text-primary" /> Recommandations
-              </div>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary font-bold">
-                {bourses.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("coach")}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
-                activeTab === "coach"
-                  ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-glow"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Bot className="h-4 w-4 text-primary" /> Coach IA
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("alertes")}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
-                activeTab === "alertes"
-                  ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-glow"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Bell className="h-4 w-4 text-primary" /> Alertes
-              </div>
-              {likedBourseIds.length > 0 && (
-                <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-500">
-                  {likedBourseIds.length}
-                </span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("mentorat")}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
-                activeTab === "mentorat"
-                  ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-glow"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Users className="h-4 w-4 text-primary" /> Mentorat
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("profil")}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
-                activeTab === "profil"
-                  ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-glow"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <User className="h-4 w-4 text-primary" /> Profil
-              </div>
-              {studentProfile ? (
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              ) : (
-                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-              )}
-            </button>
+          {/* Nav Links */}
+          <nav className="space-y-1 pt-4">
+            {NAV_ITEMS.map(({ tab, label, Icon, badge }) => {
+              const active = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
+                    active
+                      ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-glow"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`h-4 w-4 ${active ? "text-white" : "text-primary"}`} />
+                    {label}
+                  </div>
+                  {badge && badge}
+                </button>
+              );
+            })}
           </nav>
         </div>
 
-        {/* User Card & Logout / Login */}
+        {/* User Card */}
         <div className="border-t border-border pt-4 space-y-3">
           {currentUser ? (
             <div className="rounded-xl border border-border bg-secondary/50 p-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-primary font-bold text-sm overflow-hidden">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-primary font-bold text-sm overflow-hidden shrink-0">
                   {studentProfile?.photoUrl ? (
                     <img src={studentProfile.photoUrl} alt="Avatar" className="h-full w-full object-cover" />
                   ) : studentProfile?.fullName ? (
@@ -207,7 +177,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
                   </div>
                 </div>
               </div>
-
               <button
                 type="button"
                 onClick={handleLogout}
@@ -228,8 +197,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
         </div>
       </aside>
 
-      {/* ─── Main Right Scroll Viewport (Desktop ml-64, Mobile full width with bottom nav) ─ */}
-      <main className="flex-1 md:ml-64 p-4 sm:p-6 md:p-8 mb-16 md:mb-0 overflow-y-auto max-w-7xl h-screen">
+      {/* ─── Main Content Area ──────────────────────────────────────────── */}
+      <main
+        className={`flex-1 md:ml-64 overflow-y-auto h-screen ${
+          activeTab === "coach" ? "" : "p-4 sm:p-6 md:p-8 pb-20 md:pb-8"
+        }`}
+      >
         {activeTab === "recommandations" && (
           <RecommandationsView
             bourses={bourses}
@@ -259,62 +232,48 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
             }}
           />
         )}
+
+        {activeTab === "parametres" && (
+          <SettingsView
+            currentUser={currentUser}
+            studentProfile={studentProfile}
+            onLogout={handleLogout}
+            onLoginClick={() => setIsAuthModalOpen(true)}
+          />
+        )}
       </main>
 
-      {/* ─── Mobile Bottom Navigation Bar ──────────────────────────────── */}
-      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-2 py-2 justify-around">
-        <button
-          type="button"
-          onClick={() => setActiveTab("recommandations")}
-          className={`flex flex-col items-center gap-1 text-[10px] font-medium ${
-            activeTab === "recommandations" ? "text-primary font-bold" : "text-muted-foreground"
-          }`}
-        >
-          <Target className="h-5 w-5" /> Match
-        </button>
+      {/* ─── Mobile Bottom Navigation Bar ───────────────────────────────── */}
+      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md justify-around px-1 py-1.5">
+        {NAV_ITEMS.map(({ tab, label, Icon }) => {
+          const active = activeTab === tab;
+          const shortLabel =
+            tab === "recommandations" ? "Match" :
+            tab === "parametres" ? "Params" :
+            label;
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("coach")}
-          className={`flex flex-col items-center gap-1 text-[10px] font-medium ${
-            activeTab === "coach" ? "text-primary font-bold" : "text-muted-foreground"
-          }`}
-        >
-          <Bot className="h-5 w-5" /> Coach IA
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("alertes")}
-          className={`flex flex-col items-center gap-1 text-[10px] font-medium relative ${
-            activeTab === "alertes" ? "text-primary font-bold" : "text-muted-foreground"
-          }`}
-        >
-          <Bell className="h-5 w-5" /> Alertes
-          {likedBourseIds.length > 0 && (
-            <span className="absolute -top-1 right-2 h-2 w-2 rounded-full bg-rose-500" />
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("mentorat")}
-          className={`flex flex-col items-center gap-1 text-[10px] font-medium ${
-            activeTab === "mentorat" ? "text-primary font-bold" : "text-muted-foreground"
-          }`}
-        >
-          <Users className="h-5 w-5" /> Mentorat
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("profil")}
-          className={`flex flex-col items-center gap-1 text-[10px] font-medium ${
-            activeTab === "profil" ? "text-primary font-bold" : "text-muted-foreground"
-          }`}
-        >
-          <User className="h-5 w-5" /> Profil
-        </button>
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`relative flex flex-col items-center gap-0.5 px-1 py-1 text-[9px] font-medium transition-colors ${
+                active ? "text-primary font-bold" : "text-muted-foreground"
+              }`}
+            >
+              <Icon className={`h-5 w-5 ${active ? "text-primary" : ""}`} />
+              {shortLabel}
+              {/* Alert dot for alertes */}
+              {tab === "alertes" && likedBourseIds.length > 0 && (
+                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-rose-500" />
+              )}
+              {/* Pulse dot for incomplete profil */}
+              {tab === "profil" && !studentProfile && (
+                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+              )}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Auth Modal */}

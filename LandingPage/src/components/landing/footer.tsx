@@ -3,8 +3,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { WHATSAPP_URL } from "@/lib/site";
 
 const LEGAL_LINKS = [
-  { label: "Politique de confidentialité", href: "/privacy" },
-  { label: "Conditions d'utilisation", href: "/terms" },
+  { label: "À propos", href: "/about.html" },
+  { label: "Mentions légales", href: "/legal.html" },
+  { label: "Politique de confidentialité", href: "/privacy.html" },
+  { label: "Conditions d'utilisation", href: "/terms.html" },
 ];
 
 const SOCIAL_LINKS = [
@@ -109,7 +111,7 @@ export function Footer() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Boursio. Tous droits réservés.
           </p>
-          <div className="flex items-center justify-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-6">
             {LEGAL_LINKS.map((l) => (
               <a
                 key={l.href}

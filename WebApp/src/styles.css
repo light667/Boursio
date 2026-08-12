@@ -1,0 +1,287 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+/* ─── Dark theme (default) ──────────────────────────────────── */
+.dark {
+  --radius: 0.875rem;
+
+  /* Core */
+  --background: #050a14;
+  --foreground: #eef2ff;
+  --card: #0c1525;
+  --card-foreground: #eef2ff;
+  --popover: #0c1525;
+  --popover-foreground: #eef2ff;
+
+  /* Brand */
+  --primary: #0047ab;
+  --primary-foreground: #f0f6ff;
+  --secondary: #0a1428;
+  --secondary-foreground: #eef2ff;
+  --muted: #0a1428;
+  --muted-foreground: #7a8ba8;
+  --accent: #00c9a7;
+  --accent-foreground: #050a14;
+  --destructive: #ef4444;
+
+  /* Surface */
+  --border: rgba(0, 71, 171, 0.12);
+  --input: #0a1428;
+  --ring: #0047ab;
+
+  /* Glass */
+  --glass-bg: rgba(10, 20, 40, 0.72);
+  --glass-border: rgba(0, 71, 171, 0.15);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #0047ab, #0066cc);
+  --gradient-hero:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 71, 171, 0.25), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(0, 201, 167, 0.1), transparent);
+  --gradient-text: linear-gradient(135deg, #0047ab 0%, #3b7fff 50%, #00c9a7 100%);
+  --gradient-cta: linear-gradient(135deg, #0047ab 0%, #005ce6 55%, #0099aa 100%);
+
+  /* Shadows */
+  --shadow-glow: 0 0 40px rgba(0, 71, 171, 0.35);
+  --shadow-glow-strong: 0 0 60px rgba(0, 71, 171, 0.55);
+  --shadow-card: 0 20px 60px -20px rgba(0, 0, 0, 0.65);
+}
+
+/* ─── Light theme ──────────────────────────────────────────── */
+.light {
+  --radius: 0.875rem;
+
+  --background: #f5f8ff;
+  --foreground: #060c1c;
+  --card: #ffffff;
+  --card-foreground: #060c1c;
+  --popover: #ffffff;
+  --popover-foreground: #060c1c;
+
+  --primary: #0047ab;
+  --primary-foreground: #ffffff;
+  --secondary: #e8effc;
+  --secondary-foreground: #060c1c;
+  --muted: #eef3ff;
+  --muted-foreground: #4a5a7a;
+  --accent: #009980;
+  --accent-foreground: #060c1c;
+  --destructive: #dc2626;
+
+  --border: rgba(0, 71, 171, 0.12);
+  --input: #ffffff;
+  --ring: #0047ab;
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 71, 171, 0.1);
+
+  --gradient-primary: linear-gradient(135deg, #0047ab, #0066cc);
+  --gradient-hero:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 71, 171, 0.1), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(0, 153, 128, 0.08), transparent);
+  --gradient-text: linear-gradient(135deg, #0047ab 0%, #3b7fff 50%, #009980 100%);
+  --gradient-cta: linear-gradient(135deg, #0047ab 0%, #005ce6 55%, #0099aa 100%);
+
+  --shadow-glow: 0 0 30px rgba(0, 71, 171, 0.22);
+  --shadow-glow-strong: 0 0 50px rgba(0, 71, 171, 0.35);
+  --shadow-card: 0 16px 48px -16px rgba(6, 12, 28, 0.14);
+}
+
+/* ─── Base layer ─────────────────────────────────────────────── */
+@layer base {
+  * {
+    border-color: var(--color-border);
+    box-sizing: border-box;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  /* Remove default focus outline — we'll use focus-visible */
+  *:focus {
+    outline: none;
+  }
+  *:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* ─── Utilities ──────────────────────────────────────────────── */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* Ensure it's not clipped on descenders */
+    padding-bottom: 0.05em;
+  }
+
+  /* Gradient fills */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .gradient-cta {
+    background: var(--gradient-cta);
+  }
+  .bg-hero-glow,
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  /* Shadows */
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  .shadow-glow-strong {
+    box-shadow: var(--shadow-glow-strong);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Glass morphism */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid var(--glass-border);
+  }
+
+  /* Subtle dot grid */
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .light .bg-grid {
+    background-image:
+      linear-gradient(rgba(6, 12, 28, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6, 12, 28, 0.04) 1px, transparent 1px);
+  }
+
+  /* Border glow hover */
+  .border-glow-hover:hover {
+    border-color: rgba(0, 71, 171, 0.35);
+    box-shadow: 0 0 24px rgba(0, 71, 171, 0.12);
+  }
+  .border-glow-strong {
+    border-color: rgba(0, 201, 167, 0.35);
+  }
+
+  /* Tabular numerals for countdown */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ─── Animations ─────────────────────────────────────────────── */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 71, 171, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 71, 171, 0.6);
+  }
+}
+
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out forwards;
+}
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ─── Selection ──────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 71, 171, 0.3);
+  color: var(--color-foreground);
+}

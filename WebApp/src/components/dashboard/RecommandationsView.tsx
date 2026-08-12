@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Bourse, StudentProfile } from "@/lib/types";
 import { rankBoursesForStudent } from "@/lib/matchingEngine";
 import { toggleLikeScholarship } from "@/lib/supabase";
+import { SwipeView } from "./SwipeView";
 import {
   Heart,
   ExternalLink,
@@ -16,6 +17,8 @@ import {
   ChevronRight,
   Crown,
   Percent,
+  LayoutGrid,
+  Layers,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -36,12 +39,14 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
   onUpdateLikes,
   onOpenProfileSetup,
 }) => {
+  const [viewMode, setViewMode] = useState<"grid" | "swipe">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("ALL");
   const [fundingFilter, setFundingFilter] = useState<string>("ALL");
   const [selectedBourse, setSelectedBourse] = useState<Bourse | null>(null);
   const [showProModal, setShowProModal] = useState(false);
   const [proModalBourseTitle, setProModalBourseTitle] = useState("");
+
 
   // Rank scholarships with scoring engine
   const rankedBourses = useMemo(() => {
@@ -116,16 +121,57 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
             </div>
           </div>
 
-          {!studentProfile && (
-            <button
-              onClick={onOpenProfileSetup}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-glow hover:opacity-90 shrink-0"
-            >
-              Configurer mon Profil
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Mode Switcher Buttons */}
+            <div className="flex items-center rounded-xl border border-border bg-card p-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                  viewMode === "grid"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" /> Grille
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("swipe")}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                  viewMode === "swipe"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Layers className="h-3.5 w-3.5" /> Swipe Match
+              </button>
+            </div>
+
+            {!studentProfile && (
+              <button
+                onClick={onOpenProfileSetup}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-glow hover:opacity-90"
+              >
+                Configurer mon Profil
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {viewMode === "swipe" ? (
+        <SwipeView
+          bourses={filteredBourses}
+          studentProfile={studentProfile}
+          likedBourseIds={likedBourseIds}
+          userId={userId}
+          onUpdateLikes={onUpdateLikes}
+          onSwitchToGrid={() => setViewMode("grid")}
+        />
+      ) : (
+        <>
+
 
       {/* Filters Bar */}
       <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -201,7 +247,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                           : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    <Percent className="h-3 w-3" />
+        
                     <span>{matchScore}% Match</span>
                   </div>
 
@@ -320,6 +366,8 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
           );
         })}
       </div>
+      </>
+      )}
 
       {/* Scholarship Detail Drawer Modal */}
       {selectedBourse && (

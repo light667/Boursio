@@ -1,4 +1,4 @@
-import { StudentProfile, UserNotification } from "./types";
+import { StudentProfile, UserNotification, UserDocument } from "./types";
 
 const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL || "https://nymqiqkuotwuccitbzfq.supabase.co";
@@ -8,7 +8,168 @@ const STORAGE_KEYS = {
   PROFILE: "boursio_user_profile",
   LIKES: "boursio_user_likes",
   NOTIFS: "boursio_user_notifications",
+  DOCUMENTS: "boursio_user_documents",
 };
+
+/**
+ * Upload a file directly to Supabase Storage REST API (bucket: "images" or "documents")
+ */
+export async function uploadFileToSupabaseStorage(
+  bucket: "images" | "documents",
+  file: File,
+  userId: string,
+): Promise<string> {
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${userId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+  const filePath = `${userId}/${fileName}`;
+
+  // If Supabase key is present, upload to Supabase Storage REST API
+  if (SUPABASE_ANON_KEY) {
+    try {
+      const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "x-upsert": "true",
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      });
+
+      if (res.ok) {
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+        return publicUrl;
+      } else {
+        console.warn("Supabase Storage REST upload failed with status:", res.status);
+      }
+    } catch (err) {
+      console.error("Error uploading to Supabase Storage:", err);
+    }
+  }
+
+  // Fallback to Data URL for local presentation / offline fallback
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Get user uploaded documents
+ */
+export async function getUserDocumentsFromSupabase(userId: string): Promise<UserDocument[]> {
+  if (!userId) return [];
+
+  // Try Supabase table first
+  try {
+    const remoteData = await supabaseFetch(`user_documents?firebase_uid=eq.${userId}&select=*`);
+    if (Array.isArray(remoteData) && remoteData.length > 0) {
+      return remoteData.map((row: any) => ({
+        id: row.id || String(row.created_at),
+        userId: row.firebase_uid,
+        name: row.name,
+        type: row.type,
+        fileUrl: row.file_url,
+        fileSize: row.file_size,
+        uploadedAt: row.created_at || new Date().toISOString(),
+      }));
+    }
+  } catch {
+    console.warn("Using local cache for user documents");
+  }
+
+  // Local Storage fallback
+  try {
+    const existing = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
+    if (!existing) return [];
+    const map: Record<string, UserDocument[]> = JSON.parse(existing);
+    return map[userId] || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save user document record
+ */
+export async function saveUserDocumentToSupabase(
+  userId: string,
+  doc: Omit<UserDocument, "id" | "userId" | "uploadedAt">,
+): Promise<UserDocument> {
+  const newDoc: UserDocument = {
+    ...doc,
+    id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    userId,
+    uploadedAt: new Date().toISOString(),
+  };
+
+  // 1. Save to Local Storage cache
+  try {
+    const existing = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
+    const map: Record<string, UserDocument[]> = existing ? JSON.parse(existing) : {};
+    const userDocs = map[userId] || [];
+    map[userId] = [newDoc, ...userDocs];
+    localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(map));
+  } catch (err) {
+    console.error("Error saving document to local cache:", err);
+  }
+
+  // 2. Sync to Supabase user_documents table
+  try {
+    await supabaseFetch("user_documents", {
+      method: "POST",
+      body: JSON.stringify({
+        firebase_uid: userId,
+        name: newDoc.name,
+        type: newDoc.type,
+        file_url: newDoc.fileUrl,
+        file_size: newDoc.fileSize,
+      }),
+    });
+  } catch (err) {
+    console.warn("Supabase document record sync skipped");
+  }
+
+  return newDoc;
+}
+
+/**
+ * Delete user document
+ */
+export async function deleteUserDocumentFromSupabase(
+  userId: string,
+  docId: string,
+): Promise<boolean> {
+  if (!userId) return false;
+
+  // Local Storage
+  try {
+    const existing = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
+    if (existing) {
+      const map: Record<string, UserDocument[]> = JSON.parse(existing);
+      if (map[userId]) {
+        map[userId] = map[userId].filter((d) => d.id !== docId);
+        localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(map));
+      }
+    }
+  } catch (err) {
+    console.error("Error deleting document locally:", err);
+  }
+
+  // Supabase Table
+  try {
+    await supabaseFetch(`user_documents?id=eq.${docId}&firebase_uid=eq.${userId}`, {
+      method: "DELETE",
+    });
+  } catch {
+    // Ignore error
+  }
+
+  return true;
+}
 
 // Helper for direct Supabase REST API requests with retries and timeout
 async function supabaseFetch(endpoint: string, options: RequestInit = {}, retries = 2) {
@@ -219,3 +380,4 @@ export async function markNotificationAsRead(userId: string, notifId: string): P
   notifsMap[userId] = updated;
   localStorage.setItem(STORAGE_KEYS.NOTIFS, JSON.stringify(notifsMap));
 }
+

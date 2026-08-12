@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StudentProfile } from "@/lib/types";
-import { saveProfileToSupabase, getProfileFromSupabase } from "@/lib/supabase";
+import { saveProfileToSupabase, getProfileFromSupabase, uploadFileToSupabaseStorage } from "@/lib/supabase";
+import { WORLD_COUNTRIES } from "@/lib/countries";
 import { toast } from "sonner";
 import {
   User,
@@ -16,6 +17,8 @@ import {
   AlertCircle,
   FileText,
   Camera,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -35,12 +38,16 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Uploading states
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingCv, setUploadingCv] = useState(false);
+
   // Form State - Real values without pre-filled fake defaults
   const [fullName, setFullName] = useState(initialProfile?.fullName || "");
   const [dateOfBirth, setDateOfBirth] = useState(initialProfile?.dateOfBirth || "");
-  const [countryOfOrigin, setCountryOfOrigin] = useState(initialProfile?.countryOfOrigin || "");
+  const [countryOfOrigin, setCountryOfOrigin] = useState(initialProfile?.countryOfOrigin || "Togo");
   const [countryOfResidence, setCountryOfResidence] = useState(
-    initialProfile?.countryOfResidence || "",
+    initialProfile?.countryOfResidence || "Togo",
   );
   const [studyLevel, setStudyLevel] = useState(initialProfile?.studyLevel || "Licence 3");
   const [targetDegree, setTargetDegree] = useState(initialProfile?.targetDegree || "Master");
@@ -70,8 +77,8 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
         if (prof) {
           setFullName(prof.fullName || "");
           setDateOfBirth(prof.dateOfBirth || "");
-          setCountryOfOrigin(prof.countryOfOrigin || "");
-          setCountryOfResidence(prof.countryOfResidence || "");
+          setCountryOfOrigin(prof.countryOfOrigin || "Togo");
+          setCountryOfResidence(prof.countryOfResidence || "Togo");
           setStudyLevel(prof.studyLevel || "Licence 3");
           setTargetDegree(prof.targetDegree || "Master");
           setStudyField(prof.studyField || "");
@@ -87,6 +94,43 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
       });
     }
   }, [userId, initialProfile]);
+
+  const handlePhotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner un fichier image valide (JPG, PNG, WEBP).");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const url = await uploadFileToSupabaseStorage("images", file, userId || "guest");
+      setPhotoUrl(url);
+      toast.success("Photo de profil téléchargée avec succès !");
+    } catch (err) {
+      toast.error("Erreur lors de l'envoi de la photo.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleCvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCv(true);
+    try {
+      const url = await uploadFileToSupabaseStorage("documents", file, userId || "guest");
+      setCvUrl(url);
+      toast.success(`Fichier CV (${file.name}) téléchargé dans votre dossier !`);
+    } catch (err) {
+      toast.error("Erreur lors de l'envoi du CV.");
+    } finally {
+      setUploadingCv(false);
+    }
+  };
 
   const handleAddLanguage = () => {
     setLanguages([...languages, { language: "", level: "Intermédiaire" }]);
@@ -276,6 +320,38 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
               <User className="h-5 w-5 text-primary" /> Informations Personnelles & Résidence
             </h2>
 
+            {/* Avatar Upload Preview Section */}
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-secondary/30 border border-border/60">
+              <div className="relative h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                {photoUrl ? (
+                  <img src={photoUrl} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <Camera className="h-6 w-6 text-primary" />
+                )}
+                {uploadingPhoto && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <Loader2 className="h-5 w-5 text-white animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1.5 flex-1">
+                <label className="block text-xs font-bold text-foreground">Photo de Profil</label>
+                <p className="text-[11px] text-muted-foreground">
+                  Fichier image (JPG, PNG). Stocké dans le bucket <code className="text-primary font-mono">images</code>.
+                </p>
+                <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:opacity-90 cursor-pointer transition-all">
+                  <Upload className="h-3.5 w-3.5" /> Choisir une photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-xs font-medium text-muted-foreground">
@@ -286,7 +362,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="ex: Jean Dupont, Mamadou Ndiaye..."
+                  placeholder="ex: Jean Dupont, Kossi Mensah..."
                   className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -309,15 +385,19 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                   Pays d'Origine (Nationalité) *
                 </label>
                 <div className="relative">
-                  <Globe className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="text"
+                  <Globe className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                  <select
                     required
                     value={countryOfOrigin}
                     onChange={(e) => setCountryOfOrigin(e.target.value)}
-                    placeholder="ex: Sénégal, Côte d'Ivoire, Cameroun, France..."
-                    className="w-full rounded-xl border border-border bg-input pl-10 pr-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
+                    className="w-full rounded-xl border border-border bg-input pl-10 pr-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
+                  >
+                    {WORLD_COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.name}>
+                        {c.flag} {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -326,15 +406,19 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                   Pays de Résidence Actuel *
                 </label>
                 <div className="relative">
-                  <Globe className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="text"
+                  <Globe className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                  <select
                     required
                     value={countryOfResidence}
                     onChange={(e) => setCountryOfResidence(e.target.value)}
-                    placeholder="ex: Sénégal, France, Canada..."
-                    className="w-full rounded-xl border border-border bg-input pl-10 pr-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
+                    className="w-full rounded-xl border border-border bg-input pl-10 pr-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
+                  >
+                    {WORLD_COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.name}>
+                        {c.flag} {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -433,7 +517,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                 type="text"
                 value={university}
                 onChange={(e) => setUniversity(e.target.value)}
-                placeholder="ex: Université Cheikh Anta Diop, Université Félix Houphouët-Boigny..."
+                placeholder="ex: Université de Lomé, UCAD, Felix Houphouët-Boigny..."
                 className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
@@ -457,11 +541,11 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
           </div>
         )}
 
-        {/* Step 3: Languages, Scores & Optional Document Uploads */}
+        {/* Step 3: Languages, Scores & File Uploads */}
         {activeStep === 3 && (
           <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-6">
             <h2 className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-              <Award className="h-5 w-5 text-accent" /> Moyennes Académiques & Documents (Optionnel)
+              <Award className="h-5 w-5 text-accent" /> Moyennes Académiques & Fichier CV
             </h2>
 
             <div className="grid gap-6 sm:grid-cols-2">
@@ -500,41 +584,67 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
               </div>
             </div>
 
-            {/* Optional Upload Inputs */}
-            <div className="grid gap-6 sm:grid-cols-2 pt-2 border-t border-border/60">
-              <div>
-                <label className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <FileText className="h-4 w-4 text-primary" /> Lien CV (Optionnel)
-                  </span>
-                  <span className="text-[10px] text-muted-foreground font-normal">
-                    Drive, Dropbox...
-                  </span>
-                </label>
-                <input
-                  type="url"
-                  value={cvUrl}
-                  onChange={(e) => setCvUrl(e.target.value)}
-                  placeholder="https://drive.google.com/your-cv.pdf"
-                  className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-xs text-foreground focus:border-primary focus:outline-none"
-                />
+            {/* Direct File CV Upload */}
+            <div className="p-5 rounded-xl border border-border bg-secondary/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-bold text-foreground">Curriculum Vitae (CV)</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground font-mono">Bucket: documents</span>
               </div>
 
-              <div>
-                <label className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Camera className="h-4 w-4 text-primary" /> Photo de Profil (Optionnel)
-                  </span>
-                  <span className="text-[10px] text-muted-foreground font-normal">URL d'image</span>
+              <p className="text-xs text-muted-foreground">
+                Sélectionnez votre fichier CV (PDF, DOCX). Il sera automatiquement importé dans Supabase Storage et synchronisé avec votre dossier d'étudiant.
+              </p>
+
+              {cvUrl ? (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs">
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium truncate">
+                    <Check className="h-4 w-4 shrink-0" />
+                    <span className="truncate">CV Téléchargé</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={cvUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded bg-card text-foreground font-semibold hover:underline"
+                    >
+                      Consulter
+                    </a>
+                    <label className="px-2.5 py-1 rounded bg-primary text-white font-semibold cursor-pointer hover:opacity-90">
+                      Changer
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleCvFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl bg-card hover:bg-secondary/50 cursor-pointer transition-all">
+                  {uploadingCv ? (
+                    <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                      <Loader2 className="h-5 w-5 animate-spin" /> Importation du fichier en cours...
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="h-8 w-8 text-primary mb-2" />
+                      <span className="text-xs font-bold text-foreground">Importer mon CV (PDF, Word)</span>
+                      <span className="text-[10px] text-muted-foreground mt-1">Glisser ou cliquer pour parcourir vos fichiers</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleCvFileChange}
+                    className="hidden"
+                  />
                 </label>
-                <input
-                  type="url"
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  placeholder="https://example.com/avatar.jpg"
-                  className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-xs text-foreground focus:border-primary focus:outline-none"
-                />
-              </div>
+              )}
             </div>
 
             {/* Languages Section */}

@@ -95,3 +95,25 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
 }
+
+export type DocumentType =
+  | "CV"
+  | "Nationalité"
+  | "Passeport"
+  | "Relevé de notes"
+  | "Bulletin"
+  | "Attestation"
+  | "Diplôme"
+  | "Lettre de motivation"
+  | "Autre";
+
+export interface UserDocument {
+  id: string;
+  userId: string;
+  name: string;
+  type: DocumentType;
+  fileUrl: string;
+  fileSize?: number;
+  uploadedAt: string;
+}
+

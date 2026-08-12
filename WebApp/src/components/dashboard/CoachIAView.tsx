@@ -180,9 +180,15 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
         "Aide-moi à rédiger un CV international au format académique pour postuler à des bourses de Master.",
     },
     {
+      icon: FileCheck,
+      label: "Passeport Togo",
+      prompt:
+        "Quelles sont les pièces à fournir et les étapes pour la demande et le renouvellement de passeport au Togo (DGDN, quittance 30.000 F CFA) ?",
+    },
+    {
       icon: Mail,
       label: "Lettre de Motivation",
-      prompt: `Rédige une structure percutante de Lettre de Motivation pour une bourse en ${studentProfile?.studyField || "mon domaine"}.`,
+      prompt: `Rédige une structure percutante et montre-moi le modèle de référence (comme Pauline Bertrand pour l'Université Laval) de Lettre de Motivation pour une bourse en ${studentProfile?.studyField || "mon domaine"}.`,
     },
     {
       icon: UserCheck,

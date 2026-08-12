@@ -10,6 +10,7 @@ import { AlertesView } from "./AlertesView";
 import { MentoratView } from "./MentoratView";
 import { ProfileSetup } from "./ProfileSetup";
 import { SettingsView } from "./SettingsView";
+import { DocumentsView } from "./DocumentsView";
 import { AuthModal } from "../auth/AuthModal";
 import {
   Target,
@@ -21,10 +22,11 @@ import {
   LogOut,
   LogIn,
   LucideIcon,
+  Folder,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-type Tab = "recommandations" | "coach" | "alertes" | "mentorat" | "profil" | "parametres";
+type Tab = "recommandations" | "coach" | "dossier" | "alertes" | "mentorat" | "profil" | "parametres";
 
 interface DashboardLayoutProps {
   initialUser?: User | null;
@@ -89,6 +91,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
       ),
     },
     { tab: "coach", label: "Coach IA", Icon: Bot },
+    { tab: "dossier", label: "Mon Dossier", Icon: Folder },
     {
       tab: "alertes",
       label: "Alertes",
@@ -213,6 +216,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
               likedBourseIds={likedBourseIds}
               userId={userId}
               onUpdateLikes={setLikedBourseIds}
+              onOpenProfileSetup={() => setActiveTab("profil")}
+            />
+          )}
+
+          {activeTab === "dossier" && (
+            <DocumentsView
+              userId={userId}
+              studentProfile={studentProfile}
               onOpenProfileSetup={() => setActiveTab("profil")}
             />
           )}

@@ -338,7 +338,7 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
               <div className="space-y-1.5 flex-1">
                 <label className="block text-xs font-bold text-foreground">Photo de Profil</label>
                 <p className="text-[11px] text-muted-foreground">
-                  Fichier image (JPG, PNG). Stocké dans le bucket <code className="text-primary font-mono">images</code>.
+                  Fichier image (JPG, PNG).<code className="text-primary font-mono">images</code>.
                 </p>
                 <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:opacity-90 cursor-pointer transition-all">
                   <Upload className="h-3.5 w-3.5" /> Choisir une photo
@@ -591,11 +591,10 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({
                   <FileText className="h-5 w-5 text-primary" />
                   <span className="text-sm font-bold text-foreground">Curriculum Vitae (CV)</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground font-mono">Bucket: documents</span>
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Sélectionnez votre fichier CV (PDF, DOCX). Il sera automatiquement importé dans Supabase Storage et synchronisé avec votre dossier d'étudiant.
+                Sélectionnez votre fichier CV (PDF, DOCX).
               </p>
 
               {cvUrl ? (

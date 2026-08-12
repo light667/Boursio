@@ -198,11 +198,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
       </aside>
 
       {/* ─── Main Content Area ──────────────────────────────────────────── */}
-      <main
-        className={`flex-1 md:ml-64 overflow-y-auto h-screen ${
-          activeTab === "coach" ? "" : "p-4 sm:p-6 md:p-8 pb-20 md:pb-8"
-        }`}
-      >
+      {/* Coach IA needs its own internal scroll → flex-col h-screen, no padding, no overflow-y */}
+      {activeTab === "coach" ? (
+        <main className="flex flex-col flex-1 md:ml-64 h-screen overflow-hidden">
+          <CoachIAView studentProfile={studentProfile} />
+        </main>
+      ) : (
+        <main className="flex-1 md:ml-64 overflow-y-auto h-screen p-4 sm:p-6 md:p-8 pb-20 md:pb-8">
         {activeTab === "recommandations" && (
           <RecommandationsView
             bourses={bourses}
@@ -214,34 +216,33 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
           />
         )}
 
-        {activeTab === "coach" && <CoachIAView studentProfile={studentProfile} />}
+          {activeTab === "alertes" && (
+            <AlertesView userId={userId} likedBourses={likedBoursesList} />
+          )}
 
-        {activeTab === "alertes" && (
-          <AlertesView userId={userId} likedBourses={likedBoursesList} />
-        )}
+          {activeTab === "mentorat" && <MentoratView />}
 
-        {activeTab === "mentorat" && <MentoratView />}
+          {activeTab === "profil" && (
+            <ProfileSetup
+              userId={userId}
+              initialProfile={studentProfile}
+              onProfileSaved={(prof) => {
+                setStudentProfile(prof);
+                setActiveTab("recommandations");
+              }}
+            />
+          )}
 
-        {activeTab === "profil" && (
-          <ProfileSetup
-            userId={userId}
-            initialProfile={studentProfile}
-            onProfileSaved={(prof) => {
-              setStudentProfile(prof);
-              setActiveTab("recommandations");
-            }}
-          />
-        )}
-
-        {activeTab === "parametres" && (
-          <SettingsView
-            currentUser={currentUser}
-            studentProfile={studentProfile}
-            onLogout={handleLogout}
-            onLoginClick={() => setIsAuthModalOpen(true)}
-          />
-        )}
-      </main>
+          {activeTab === "parametres" && (
+            <SettingsView
+              currentUser={currentUser}
+              studentProfile={studentProfile}
+              onLogout={handleLogout}
+              onLoginClick={() => setIsAuthModalOpen(true)}
+            />
+          )}
+        </main>
+      )}
 
       {/* ─── Mobile Bottom Navigation Bar ───────────────────────────────── */}
       <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md justify-around px-1 py-1.5">

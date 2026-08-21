@@ -78,13 +78,14 @@ export function Nav({ onLaunchApp }: NavProps) {
             <span>{langFlag} {langLabel}</span>
           </button>
 
+          {/* Launch Web App Button - hidden on small mobile screens to keep navbar clean, visible in mobile hamburger menu */}
           <button
             type="button"
             onClick={onLaunchApp}
-            className="gradient-primary text-primary-foreground text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-95 transition-all shadow-glow hover:shadow-glow-strong inline-flex items-center gap-2 whitespace-nowrap"
+            className="hidden sm:inline-flex gradient-primary text-primary-foreground text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-95 transition-all shadow-glow hover:shadow-glow-strong items-center gap-2 whitespace-nowrap"
           >
             <span>{tn.launch}</span>
-            <ExternalLink className="h-3.5 w-3.5 hidden sm:inline-block" />
+            <ExternalLink className="h-3.5 w-3.5" />
           </button>
 
           {/* Mobile Sheet Menu Trigger */}

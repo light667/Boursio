@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { StudentProfile } from "@/lib/types";
 import { User as FirebaseUser } from "firebase/auth";
+import { getUserSubscription, getUserTransactions, PLANS_CONFIG } from "@/lib/subscription";
+import { PlanBadge } from "@/components/subscription/PlanBadge";
 import {
   Sun,
   Moon,
@@ -19,6 +21,9 @@ import {
   Key,
   HelpCircle,
   Info,
+  Crown,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -27,6 +32,7 @@ interface SettingsViewProps {
   studentProfile: StudentProfile | null;
   onLogout: () => void;
   onLoginClick: () => void;
+  onOpenPaymentModal?: () => void;
 }
 
 type Language = "fr" | "en";
@@ -36,6 +42,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   studentProfile,
   onLogout,
   onLoginClick,
+  onOpenPaymentModal,
 }) => {
   const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useState<Language>(
@@ -258,6 +265,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               Full English translation coming soon. Some elements may remain in French.
             </div>
           )}
+        </div>
+
+        {/* Subscription & Plans Management — full width */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4 md:col-span-2">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h2 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-500" /> Mon Abonnement & Formule Boursio
+            </h2>
+            <PlanBadge plan={getUserSubscription(currentUser?.uid || "guest").plan} />
+          </div>
+
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold text-foreground">
+                Formule Active : {PLANS_CONFIG[getUserSubscription(currentUser?.uid || "guest").plan].name}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {getUserSubscription(currentUser?.uid || "guest").expiresAt
+                  ? `Valable jusqu'au ${new Date(getUserSubscription(currentUser?.uid || "guest").expiresAt!).toLocaleDateString("fr-FR")}`
+                  : "Accès standard gratuit illimité"}
+              </p>
+            </div>
+
+            {onOpenPaymentModal && (
+              <button
+                type="button"
+                onClick={onOpenPaymentModal}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-4 py-2 text-xs font-bold text-white shadow-glow hover:opacity-90 transition-all shrink-0"
+              >
+                <Crown className="h-3.5 w-3.5" /> Changer de Formule (Pro / Max)
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 3. Compte & Sécurité — full width */}

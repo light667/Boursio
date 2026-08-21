@@ -1,7 +1,11 @@
 import { Mail } from "lucide-react";
 import { WHATSAPP_URL } from "@/lib/site";
+import { useLang } from "@/hooks/use-lang";
 
 export function Contact() {
+  const { lang, t } = useLang();
+  const tc = t.contact[lang];
+
   return (
     <section id="contact" className="relative px-4 py-24 sm:py-32 overflow-hidden">
       {/* Background accents */}
@@ -12,10 +16,10 @@ export function Contact() {
         <div className="glass rounded-3xl p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 border border-border/80 text-center sm:text-left">
           <div>
             <h2 className="font-display font-bold text-2xl sm:text-3xl text-foreground mb-2">
-              Besoin d'un contact direct ?
+              {tc.title}
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Notre équipe d'assistance et nos conseillers Boursio vous répondent sous 24 heures.
+              {tc.sub}
             </p>
           </div>
 
@@ -33,7 +37,7 @@ export function Contact() {
               rel="noreferrer"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition shadow-glow"
             >
-              <span>WhatsApp Officiel</span>
+              <span>{tc.whatsapp}</span>
             </a>
           </div>
         </div>

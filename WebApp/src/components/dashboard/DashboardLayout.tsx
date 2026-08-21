@@ -2,16 +2,20 @@ import React, { useState, useEffect } from "react";
 import { StudentProfile, Bourse } from "@/lib/types";
 import { logoutUser, subscribeAuthState } from "@/lib/firebase-auth";
 import { User } from "firebase/auth";
-import { getProfileFromSupabase, getUserLikedBourses } from "@/lib/supabase";
+import { getProfileFromSupabase, saveProfileToSupabase, getUserLikedBourses } from "@/lib/supabase";
 import { getAllBourses } from "@/lib/boursesData";
+import { getUserSubscription } from "@/lib/subscription";
 import { RecommandationsView } from "./RecommandationsView";
 import { CoachIAView } from "./CoachIAView";
+import { CandidaturesTrackerView } from "./CandidaturesTrackerView";
 import { AlertesView } from "./AlertesView";
 import { MentoratView } from "./MentoratView";
 import { ProfileSetup } from "./ProfileSetup";
 import { SettingsView } from "./SettingsView";
 import { DocumentsView } from "./DocumentsView";
 import { AuthModal } from "../auth/AuthModal";
+import { PaymentModal } from "../subscription/PaymentModal";
+import { PlanBadge } from "../subscription/PlanBadge";
 import {
   Target,
   Bot,
@@ -23,23 +27,38 @@ import {
   LogIn,
   LucideIcon,
   Folder,
+  LayoutDashboard,
+  ArrowLeft,
+  Crown,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-type Tab = "recommandations" | "coach" | "dossier" | "alertes" | "mentorat" | "profil" | "parametres";
+type Tab =
+  | "recommandations"
+  | "candidatures"
+  | "coach"
+  | "dossier"
+  | "alertes"
+  | "mentorat"
+  | "profil"
+  | "parametres";
 
 interface DashboardLayoutProps {
   initialUser?: User | null;
   onBackToLanding?: () => void;
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser }) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, onBackToLanding }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(initialUser || null);
   const [activeTab, setActiveTab] = useState<Tab>("recommandations");
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [likedBourseIds, setLikedBourseIds] = useState<string[]>([]);
   const [bourses, setBourses] = useState<Bourse[]>([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [subscriptionState, setSubscriptionState] = useState(
+    getUserSubscription(initialUser?.uid || "guest"),
+  );
 
   useEffect(() => {
     const unsubscribe = subscribeAuthState((user) => {
@@ -49,15 +68,28 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
           if (prof && prof.fullName) {
             setStudentProfile(prof);
           } else {
-            setStudentProfile(null);
-            setActiveTab("profil");
+            // Check if there was a profile created in guest mode
+            getProfileFromSupabase("guest").then((guestProf) => {
+              if (guestProf && guestProf.fullName) {
+                const userProf = { ...guestProf, userId: user.uid };
+                saveProfileToSupabase(userProf);
+                setStudentProfile(userProf);
+              } else {
+                setStudentProfile(null);
+                setActiveTab("profil");
+              }
+            });
           }
         });
         getUserLikedBourses(user.uid).then(setLikedBourseIds);
       } else {
         setCurrentUser(null);
-        setStudentProfile(null);
-        setIsAuthModalOpen(true);
+        // Load offline profile fallback
+        getProfileFromSupabase("guest").then((cachedProf) => {
+          if (cachedProf && cachedProf.fullName) {
+            setStudentProfile(cachedProf);
+          }
+        });
       }
     });
     return () => unsubscribe();
@@ -87,6 +119,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
       badge: (
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary font-bold">
           {bourses.length}
+        </span>
+      ),
+    },
+    {
+      tab: "candidatures",
+      label: "Candidatures",
+      Icon: LayoutDashboard,
+      badge: (
+        <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-500">
+          Suivi
         </span>
       ),
     },
@@ -123,18 +165,32 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
       <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 flex-col justify-between border-r border-border bg-card p-6 shrink-0 z-30">
         <div className="space-y-6">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Boursio Logo" className="h-9 w-9 object-contain" />
-            <div>
-              <span className="font-display text-xl font-bold tracking-tight text-foreground">Boursio</span>
-              <span className="block text-[10px] font-semibold text-primary uppercase tracking-wider">
-                Bourses & Orientation
-              </span>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img src={logo} alt="Boursio Logo" className="h-9 w-9 object-contain" />
+                <div>
+                  <span className="font-display text-xl font-bold tracking-tight text-foreground">Boursio</span>
+                  <span className="block text-[10px] font-semibold text-primary uppercase tracking-wider">
+                    Bourses & Orientation
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {onBackToLanding && (
+              <button
+                type="button"
+                onClick={onBackToLanding}
+                className="w-full flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/40 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <ArrowLeft className="h-3 w-3" /> Retour au site vitrine
+              </button>
+            )}
           </div>
 
           {/* Nav Links */}
-          <nav className="space-y-1 pt-4">
+          <nav className="space-y-1 pt-2">
             {NAV_ITEMS.map(({ tab, label, Icon, badge }) => {
               const active = activeTab === tab;
               return (
@@ -142,7 +198,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center justify-between rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
                     active
                       ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-glow"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -159,8 +215,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
           </nav>
         </div>
 
-        {/* User Card */}
+        {/* User Card & Subscription */}
         <div className="border-t border-border pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <PlanBadge
+              plan={subscriptionState.plan}
+              showUpgradeBtn={subscriptionState.plan === "free"}
+              onUpgradeClick={() => setIsPaymentModalOpen(true)}
+            />
+          </div>
+
           {currentUser ? (
             <div className="rounded-xl border border-border bg-secondary/50 p-3">
               <div className="flex items-center gap-2.5">
@@ -220,6 +284,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
             />
           )}
 
+          {activeTab === "candidatures" && (
+            <CandidaturesTrackerView
+              userId={userId}
+              likedBourses={likedBoursesList}
+              onOpenCoach={() => setActiveTab("coach")}
+            />
+          )}
+
           {activeTab === "dossier" && (
             <DocumentsView
               userId={userId}
@@ -232,7 +304,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
             <AlertesView userId={userId} likedBourses={likedBoursesList} />
           )}
 
-          {activeTab === "mentorat" && <MentoratView />}
+          {activeTab === "mentorat" && (
+            <MentoratView userId={userId} studentProfile={studentProfile} />
+          )}
 
           {activeTab === "profil" && (
             <ProfileSetup
@@ -251,6 +325,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
               studentProfile={studentProfile}
               onLogout={handleLogout}
               onLoginClick={() => setIsAuthModalOpen(true)}
+              onOpenPaymentModal={() => setIsPaymentModalOpen(true)}
             />
           )}
         </main>
@@ -262,6 +337,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
           const active = activeTab === tab;
           const shortLabel =
             tab === "recommandations" ? "Match" :
+            tab === "candidatures" ? "Suivi" :
             tab === "parametres" ? "Params" :
             label;
 
@@ -303,6 +379,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser })
               setActiveTab("recommandations");
             }
           });
+        }}
+      />
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        userId={userId || "guest"}
+        initialPlan="max"
+        onPaymentSuccess={(plan) => {
+          setSubscriptionState(getUserSubscription(userId || "guest"));
+          setIsPaymentModalOpen(false);
         }}
       />
     </div>

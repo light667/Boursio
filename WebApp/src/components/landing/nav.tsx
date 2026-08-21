@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Menu, ArrowRight, ExternalLink } from "lucide-react";
+import { Menu, ArrowRight, ExternalLink, Globe } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useLang } from "@/hooks/use-lang";
+import type { Lang } from "@/lib/i18n";
 import {
   Sheet,
   SheetContent,
@@ -11,20 +13,27 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 
-const NAV_LINKS = [
-  { href: "#features", label: "Fonctionnalités" },
-  { href: "#how", label: "Comment ça marche" },
-  { href: "#pricing", label: "Tarifs" },
-  { href: "#faq", label: "FAQ" },
-  { href: "#contact", label: "Contact" },
-] as const;
-
 interface NavProps {
   onLaunchApp?: () => void;
 }
 
 export function Nav({ onLaunchApp }: NavProps) {
   const [open, setOpen] = useState(false);
+  const { lang, setLang, t } = useLang();
+  const tn = t.nav[lang];
+
+  const NAV_LINKS = [
+    { href: "#features", label: tn.features },
+    { href: "#how", label: tn.how },
+    { href: "#pricing", label: tn.pricing },
+    { href: "#faq", label: tn.faq },
+    { href: "#contact", label: tn.contact },
+  ] as const;
+
+  const toggleLang = () => setLang(lang === "fr" ? "en" : "fr");
+  const nextLang: Lang = lang === "fr" ? "en" : "fr";
+  const langLabel = lang === "fr" ? "EN" : "FR";
+  const langFlag = nextLang === "en" ? "🇬🇧" : "🇫🇷";
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 w-full border-b border-border/40 bg-background/85 backdrop-blur-xl transition-all">
@@ -55,15 +64,26 @@ export function Nav({ onLaunchApp }: NavProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <ThemeToggle className="hidden sm:inline-flex" />
+
+          {/* Language switcher */}
+          <button
+            type="button"
+            onClick={toggleLang}
+            title={`Switch to ${nextLang.toUpperCase()}`}
+            className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-border bg-card hover:bg-muted/50 text-xs font-bold text-foreground transition-all"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            <span>{langFlag} {langLabel}</span>
+          </button>
 
           <button
             type="button"
             onClick={onLaunchApp}
             className="gradient-primary text-primary-foreground text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl hover:opacity-95 transition-all shadow-glow hover:shadow-glow-strong inline-flex items-center gap-2 whitespace-nowrap"
           >
-            <span>Lancer la version web</span>
+            <span>{tn.launch}</span>
             <ExternalLink className="h-3.5 w-3.5 hidden sm:inline-block" />
           </button>
 
@@ -99,8 +119,17 @@ export function Nav({ onLaunchApp }: NavProps) {
                 ))}
               </nav>
               <div className="mt-6 flex items-center justify-between px-1 border-t border-border pt-4">
-                <span className="text-sm text-muted-foreground">Apparence</span>
-                <ThemeToggle />
+                <span className="text-sm text-muted-foreground">{tn.appearance}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleLang}
+                    className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-border bg-card text-xs font-bold text-foreground"
+                  >
+                    {langFlag} {langLabel}
+                  </button>
+                  <ThemeToggle />
+                </div>
               </div>
               <SheetClose asChild>
                 <button
@@ -111,7 +140,7 @@ export function Nav({ onLaunchApp }: NavProps) {
                   }}
                   className="mt-6 w-full gradient-primary text-primary-foreground font-semibold px-4 py-3 rounded-xl hover:opacity-90 transition shadow-glow inline-flex items-center justify-center gap-2"
                 >
-                  Lancer la version web <ArrowRight className="h-4 w-4" />
+                  {tn.launch} <ArrowRight className="h-4 w-4" />
                 </button>
               </SheetClose>
             </SheetContent>

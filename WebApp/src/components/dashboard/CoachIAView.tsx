@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { StudentProfile } from "@/lib/types";
 import { generateAICoachResponse } from "@/lib/llm";
+import { AIToolbarModals } from "./AIToolbarModals";
 import { toast } from "sonner";
 import {
   Send,
@@ -16,6 +17,8 @@ import {
   Check,
   User,
   MessageSquare,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -159,6 +162,7 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
   ]);
 
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [activeAIModal, setActiveAIModal] = useState<"letter" | "cv" | "interview" | null>(null);
   const [pastSessions, setPastSessions] = useState<{ id: string; title: string; date: string }[]>(
     [],
   );
@@ -175,9 +179,21 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
   const quickActions = [
     {
       icon: FileText,
-      label: "CV académique",
-      prompt:
-        "Aide-moi à rédiger un CV international au format académique pour postuler à des bourses de Master.",
+      label: "Générateur Lettre",
+      action: () => setActiveAIModal("letter"),
+      prompt: "",
+    },
+    {
+      icon: TrendingUp,
+      label: "Diagnostic CV ATS",
+      action: () => setActiveAIModal("cv"),
+      prompt: "",
+    },
+    {
+      icon: Sparkles,
+      label: "Simulateur Entretien",
+      action: () => setActiveAIModal("interview"),
+      prompt: "",
     },
     {
       icon: FileCheck,
@@ -201,12 +217,6 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
       label: "Entretien jury",
       prompt:
         "Quelles sont les questions fréquentes posées lors d'un entretien de jury de bourse et comment y répondre ?",
-    },
-    {
-      icon: FileCheck,
-      label: "Passeport & Visa",
-      prompt:
-        "Quelles sont les étapes administratives clés pour obtenir un passeport rapidement et préparer ma demande de Visa étudiant ?",
     },
     {
       icon: Globe,
@@ -423,14 +433,25 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
         <div className="max-w-3xl mx-auto flex overflow-x-auto gap-2 scrollbar-none">
           {quickActions.map((action, idx) => {
             const Icon = action.icon;
+            const isStudio = Boolean(action.action);
             return (
               <button
                 key={idx}
                 type="button"
-                onClick={() => handleSendMessage(action.prompt)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:bg-secondary hover:text-foreground transition-colors"
+                onClick={() => {
+                  if (action.action) {
+                    action.action();
+                  } else if (action.prompt) {
+                    handleSendMessage(action.prompt);
+                  }
+                }}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-all ${
+                  isStudio
+                    ? "border-primary/40 bg-primary/10 text-primary font-bold hover:bg-primary/20 shadow-sm"
+                    : "border-border bg-secondary/80 text-muted-foreground hover:border-primary/40 hover:bg-secondary hover:text-foreground"
+                }`}
               >
-                <Icon className="h-3.5 w-3.5 text-primary" /> {action.label}
+                <Icon className={`h-3.5 w-3.5 ${isStudio ? "text-primary fill-primary/20" : "text-primary"}`} /> {action.label}
               </button>
             );
           })}
@@ -464,6 +485,13 @@ export const CoachIAView: React.FC<CoachIAViewProps> = ({ studentProfile }) => {
           </button>
         </form>
       </div>
+
+      {/* AI Studio Modals */}
+      <AIToolbarModals
+        studentProfile={studentProfile}
+        activeModal={activeAIModal}
+        onClose={() => setActiveAIModal(null)}
+      />
     </div>
   );
 };

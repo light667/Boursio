@@ -117,3 +117,94 @@ export interface UserDocument {
   uploadedAt: string;
 }
 
+export type SubscriptionPlan = "free" | "pro" | "max";
+
+export type PaymentMethod =
+  | "wave"
+  | "orange_money"
+  | "mtn_momo"
+  | "moov_money"
+  | "tmoney"
+  | "flooz"
+  | "card";
+
+export interface PaymentTransaction {
+  id: string;
+  userId: string;
+  plan: SubscriptionPlan;
+  amount: number; // in FCFA
+  currency: string;
+  paymentMethod: PaymentMethod;
+  phoneNumber?: string;
+  status: "success" | "pending" | "failed";
+  createdAt: string;
+  expiresAt: string;
+}
+
+export type ApplicationStatus =
+  | "draft"
+  | "in_progress"
+  | "submitted"
+  | "interview"
+  | "accepted"
+  | "rejected";
+
+export interface ScholarshipApplication {
+  id: string;
+  userId: string;
+  bourseId: string;
+  bourseTitre: string;
+  universite?: string;
+  country?: string;
+  deadline?: string;
+  status: ApplicationStatus;
+  notes?: string;
+  checklist: {
+    id: string;
+    label: string;
+    completed: boolean;
+    requiredDocType?: DocumentType;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MentorProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  role: string;
+  scholarshipObtained: string;
+  university: string;
+  country: string;
+  field: string;
+  rating: number;
+  reviewCount: number;
+  bio: string;
+  topics: string[];
+  hourlyAvailability: string;
+  verified: boolean;
+}
+
+export interface MentorshipBooking {
+  id: string;
+  userId: string;
+  mentorId: string;
+  mentorName: string;
+  topic: string;
+  date: string;
+  timeSlot: string;
+  status: "confirmed" | "completed" | "cancelled";
+  meetingLink?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface AIGeneratedLetter {
+  id: string;
+  userId: string;
+  bourseTitre: string;
+  universite: string;
+  content: string;
+  createdAt: string;
+}

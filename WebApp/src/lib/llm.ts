@@ -170,3 +170,90 @@ Directives de réponse :
     profile?.languages?.map((l) => l.language).join(", ") || "Français / Anglais"
   }).\n\nDes questions précises sur le visa, le CV ou les entretiens ? Posez-les moi !`;
 }
+
+/**
+ * Real AI Generator for tailored scholarship motivation letters
+ */
+export async function generateAILetterOfMotivation(params: {
+  scholarshipTitle: string;
+  targetUniv: string;
+  degreeField: string;
+  careerGoals: string;
+  profile: StudentProfile | null;
+}): Promise<string> {
+  const applicantName = params.profile?.fullName || "Candidat Boursio";
+  const originCountry = params.profile?.countryOfOrigin || "Togo";
+  const gpa = params.profile?.gpaScore || 15;
+  const level = params.profile?.studyLevel || "Licence 3";
+
+  const prompt = `Rédige une Lettre de Motivation d'excellence académique complète et professionnelle pour postuler à la bourse suivante :
+- Bourse : ${params.scholarshipTitle}
+- Université : ${params.targetUniv}
+- Filière : ${params.degreeField}
+- Niveau actuel : ${level} (Moyenne : ${gpa}/20)
+- Nom de l'étudiant : ${applicantName} (Pays d'origine : ${originCountry})
+- Objectif de carrière : ${params.careerGoals}
+
+Règles de rédaction strictes :
+1. Respecte la structure officielle d'une lettre de motivation pour bourse internationale (En-tête, Objet, Introduction accrocheuse, Parcours académique et distinctions, Adéquation avec l'université d'accueil, Projet d'impact et de retour/contribution dans le pays d'origine, Formule de politesse formelle).
+2. Ton très convaincant, soigné et académique.
+3. Rédige en Français sans texte explicatif avant ou après la lettre.`;
+
+  if (GROQ_API_KEY) {
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: "Tu es un expert mondial en rédaction de lettres de motivation pour bourses d'études prestigieuses (Eiffel, Chevening, Fulbright, Mastercard Foundation).",
+            },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 1500,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content;
+        if (text) return text.trim();
+      }
+    } catch (err) {
+      console.warn("Groq API error during letter generation:", err);
+    }
+  }
+
+  // Fallback template
+  return `
+${applicantName}
+${params.profile?.userId ? "Candidat Boursio Certifié" : "Étudiant International"} | ${originCountry}
+
+À l'attention des Membres du Comité de Sélection
+Programme : ${params.scholarshipTitle}
+Établissement cible : ${params.targetUniv}
+
+Objet : Candidature à la ${params.scholarshipTitle} pour le cursus en ${params.degreeField}
+
+Madame, Monsieur les Membres du Jury,
+
+C’est avec une détermination profonde et un projet académique mûrement réfléchi que je vous adresse ma candidature pour bénéficier de la prestigieuse ${params.scholarshipTitle} au sein de ${params.targetUniv}.
+
+Titulaire d’un parcours distingué en ${level} avec une moyenne académique de ${gpa}/20, j’ai développé des compétences solides en ${params.degreeField}. Mon ambition est d’approfondir mes connaissances au sein de votre établissement d'excellence afin de concrétiser mon objectif professionnel : ${params.careerGoals}.
+
+Bénéficier de cette opportunité financière me permettra de me consacrer pleinement à l'excellence de mes travaux universitaires, sans contrainte matérielle, et de participer activement aux initiatives de recherche de ${params.targetUniv}. À terme, je souhaite mobiliser cette expertise de haut niveau pour contribuer significativement au développement technologique et économique de mon pays d'origine, le ${originCountry}.
+
+Persuadé(e) que ce programme constitue le tremplin idéal pour réaliser cette ambition, je reste à votre entière disposition pour tout entretien de sélection.
+
+Je vous prie d'agréer, Madame, Monsieur les Membres du Jury, l'expression de ma très haute considération.
+
+${applicantName}
+  `.trim();
+}

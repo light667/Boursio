@@ -13,4 +13,4 @@ export const KEYWORDS =
 
 export const OG_IMAGE = `${SITE_URL}/logo.png`;
 
-export const WHATSAPP_URL = "https://wa.me/22870703111";
+export const WHATSAPP_URL = "https://whatsapp.com/channel/0029VbDlziBEVccBb7gGxd1R";

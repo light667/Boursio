@@ -61,32 +61,41 @@ export async function uploadFileToSupabaseStorage(
  * Get user uploaded documents
  */
 export async function getUserDocumentsFromSupabase(userId: string): Promise<UserDocument[]> {
-  if (!userId) return [];
+  const effectiveId = userId || "guest";
 
   // Try Supabase table first
-  try {
-    const remoteData = await supabaseFetch(`user_documents?firebase_uid=eq.${userId}&select=*`);
-    if (Array.isArray(remoteData) && remoteData.length > 0) {
-      return remoteData.map((row: any) => ({
-        id: row.id || String(row.created_at),
-        userId: row.firebase_uid,
-        name: row.name,
-        type: row.type,
-        fileUrl: row.file_url,
-        fileSize: row.file_size,
-        uploadedAt: row.created_at || new Date().toISOString(),
-      }));
+  if (userId && userId !== "guest") {
+    try {
+      const remoteData = await supabaseFetch(`user_documents?firebase_uid=eq.${userId}&select=*`);
+      if (Array.isArray(remoteData) && remoteData.length > 0) {
+        return remoteData.map((row: any) => ({
+          id: row.id || String(row.created_at),
+          userId: row.firebase_uid,
+          name: row.name,
+          type: row.type,
+          fileUrl: row.file_url,
+          fileSize: row.file_size,
+          uploadedAt: row.created_at || new Date().toISOString(),
+        }));
+      }
+    } catch {
+      console.warn("Using local cache for user documents");
     }
-  } catch {
-    console.warn("Using local cache for user documents");
   }
 
-  // Local Storage fallback
+  // Local Storage fallback with cross-session merge
   try {
     const existing = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
     if (!existing) return [];
     const map: Record<string, UserDocument[]> = JSON.parse(existing);
-    return map[userId] || [];
+    const userDocs = map[effectiveId] || [];
+    const guestDocs = map["guest"] || [];
+    if (effectiveId !== "guest" && userDocs.length === 0 && guestDocs.length > 0) {
+      map[effectiveId] = guestDocs;
+      localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(map));
+      return guestDocs;
+    }
+    return userDocs;
   } catch {
     return [];
   }
@@ -99,10 +108,11 @@ export async function saveUserDocumentToSupabase(
   userId: string,
   doc: Omit<UserDocument, "id" | "userId" | "uploadedAt">,
 ): Promise<UserDocument> {
+  const effectiveId = userId || "guest";
   const newDoc: UserDocument = {
     ...doc,
     id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-    userId,
+    userId: effectiveId,
     uploadedAt: new Date().toISOString(),
   };
 
@@ -110,27 +120,36 @@ export async function saveUserDocumentToSupabase(
   try {
     const existing = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
     const map: Record<string, UserDocument[]> = existing ? JSON.parse(existing) : {};
-    const userDocs = map[userId] || [];
-    map[userId] = [newDoc, ...userDocs];
+    const userDocs = map[effectiveId] || [];
+    map[effectiveId] = [newDoc, ...userDocs];
+    // Also save in guest if not logged in
+    if (effectiveId !== "guest") {
+      map["guest"] = [newDoc, ...(map["guest"] || [])];
+    }
     localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(map));
   } catch (err) {
     console.error("Error saving document to local cache:", err);
   }
 
   // 2. Sync to Supabase user_documents table
-  try {
-    await supabaseFetch("user_documents", {
-      method: "POST",
-      body: JSON.stringify({
-        firebase_uid: userId,
-        name: newDoc.name,
-        type: newDoc.type,
-        file_url: newDoc.fileUrl,
-        file_size: newDoc.fileSize,
-      }),
-    });
-  } catch (err) {
-    console.warn("Supabase document record sync skipped");
+  if (userId && userId !== "guest") {
+    try {
+      await supabaseFetch("user_documents", {
+        method: "POST",
+        headers: {
+          Prefer: "resolution=merge-duplicates",
+        },
+        body: JSON.stringify({
+          firebase_uid: userId,
+          name: newDoc.name,
+          type: newDoc.type,
+          file_url: newDoc.fileUrl,
+          file_size: newDoc.fileSize,
+        }),
+      });
+    } catch (err) {
+      console.warn("Supabase document record sync skipped");
+    }
   }
 
   return newDoc;
@@ -143,29 +162,34 @@ export async function deleteUserDocumentFromSupabase(
   userId: string,
   docId: string,
 ): Promise<boolean> {
-  if (!userId) return false;
+  const effectiveId = userId || "guest";
 
   // Local Storage
   try {
     const existing = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
     if (existing) {
       const map: Record<string, UserDocument[]> = JSON.parse(existing);
-      if (map[userId]) {
-        map[userId] = map[userId].filter((d) => d.id !== docId);
-        localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(map));
+      if (map[effectiveId]) {
+        map[effectiveId] = map[effectiveId].filter((d) => d.id !== docId);
       }
+      if (map["guest"]) {
+        map["guest"] = map["guest"].filter((d) => d.id !== docId);
+      }
+      localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(map));
     }
   } catch (err) {
     console.error("Error deleting document locally:", err);
   }
 
   // Supabase Table
-  try {
-    await supabaseFetch(`user_documents?id=eq.${docId}&firebase_uid=eq.${userId}`, {
-      method: "DELETE",
-    });
-  } catch {
-    // Ignore error
+  if (userId && userId !== "guest") {
+    try {
+      await supabaseFetch(`user_documents?id=eq.${docId}&firebase_uid=eq.${userId}`, {
+        method: "DELETE",
+      });
+    } catch {
+      // Ignore error
+    }
   }
 
   return true;
@@ -216,46 +240,56 @@ async function supabaseFetch(endpoint: string, options: RequestInit = {}, retrie
 }
 
 export async function saveProfileToSupabase(profile: StudentProfile): Promise<boolean> {
+  const effectiveId = profile.userId || "guest";
   try {
     // 1. Save to local storage cache for instant offline responsiveness
     const existing = localStorage.getItem(STORAGE_KEYS.PROFILE);
     const profilesMap = existing ? JSON.parse(existing) : {};
-    profilesMap[profile.userId] = {
+    const updatedProfile = {
       ...profile,
+      userId: effectiveId,
       updatedAt: new Date().toISOString(),
     };
+    profilesMap[effectiveId] = updatedProfile;
+    profilesMap["guest"] = updatedProfile;
+    localStorage.setItem("boursio_latest_profile", JSON.stringify(updatedProfile));
     localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profilesMap));
 
-    // 2. Sync to Supabase `profiles` table (POST / upsert)
-    const payload = {
-      firebase_uid: profile.userId,
-      full_name: profile.fullName,
-      birth_date: profile.dateOfBirth || null,
-      nationality: profile.countryOfOrigin || "",
-      country: profile.countryOfResidence || "",
-      education_level: profile.studyLevel,
-      field_of_study: profile.studyField,
-      university: profile.university || "",
-      gpa: profile.gpaScore,
-      french_level:
-        profile.frenchLevel ||
-        profile.languages?.find((l) => l.language.toLowerCase().includes("fran"))?.level ||
-        "Bilingue",
-      english_level:
-        profile.englishLevel ||
-        profile.languages?.find((l) => l.language.toLowerCase().includes("ang"))?.level ||
-        "Intermédiaire",
-      target_fields: profile.targetFields || [profile.targetDegree],
-      academic_goals: profile.academicGoals || "",
-      cv_url: profile.cvUrl || "",
-      photo_url: profile.photoUrl || "",
-      avatar_url: profile.photoUrl || "",
-    };
+    // 2. Sync to Supabase `profiles` table with upsert header
+    if (profile.userId && profile.userId !== "guest") {
+      const payload = {
+        firebase_uid: profile.userId,
+        full_name: profile.fullName,
+        birth_date: profile.dateOfBirth || null,
+        nationality: profile.countryOfOrigin || "",
+        country: profile.countryOfResidence || "",
+        education_level: profile.studyLevel,
+        field_of_study: profile.studyField,
+        university: profile.university || "",
+        gpa: profile.gpaScore,
+        french_level:
+          profile.frenchLevel ||
+          profile.languages?.find((l) => l.language.toLowerCase().includes("fran"))?.level ||
+          "Bilingue",
+        english_level:
+          profile.englishLevel ||
+          profile.languages?.find((l) => l.language.toLowerCase().includes("ang"))?.level ||
+          "Intermédiaire",
+        target_fields: profile.targetFields || [profile.targetDegree],
+        academic_goals: profile.academicGoals || "",
+        cv_url: profile.cvUrl || "",
+        photo_url: profile.photoUrl || "",
+        avatar_url: profile.photoUrl || "",
+      };
 
-    await supabaseFetch("profiles", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+      await supabaseFetch("profiles", {
+        method: "POST",
+        headers: {
+          Prefer: "resolution=merge-duplicates",
+        },
+        body: JSON.stringify(payload),
+      });
+    }
 
     return true;
   } catch (err) {
@@ -265,52 +299,63 @@ export async function saveProfileToSupabase(profile: StudentProfile): Promise<bo
 }
 
 export async function getProfileFromSupabase(userId: string): Promise<StudentProfile | null> {
-  if (!userId) return null;
+  const effectiveId = userId || "guest";
 
   try {
-    // 1. Try Supabase profiles table first
-    const remoteData = await supabaseFetch(`profiles?firebase_uid=eq.${userId}&select=*`);
-    if (Array.isArray(remoteData) && remoteData.length > 0) {
-      const row = remoteData[0];
-      return {
-        userId: row.firebase_uid || userId,
-        fullName: row.full_name || "",
-        dateOfBirth: row.birth_date || "",
-        countryOfOrigin: row.nationality || "",
-        countryOfResidence: row.country || "",
-        studyLevel: row.education_level || "Licence 3",
-        targetDegree:
-          Array.isArray(row.target_fields) && row.target_fields.length > 0
-            ? row.target_fields[0]
-            : "Master",
-        studyField: row.field_of_study || "",
-        university: row.university || "",
-        gpaScore: row.gpa ? Number(row.gpa) : 0,
-        lastDegreeGpa: row.gpa ? Number(row.gpa) : 0,
-        frenchLevel: row.french_level,
-        englishLevel: row.english_level,
-        languages: [
-          { language: "Français", level: row.french_level || "Bilingue" },
-          { language: "Anglais", level: row.english_level || "Intermédiaire" },
-        ],
-        cvUrl: row.cv_url,
-        photoUrl: row.photo_url || row.avatar_url,
-        updatedAt: row.created_at,
-      };
+    // 1. Try Supabase profiles table first if valid user
+    if (userId && userId !== "guest") {
+      const remoteData = await supabaseFetch(`profiles?firebase_uid=eq.${userId}&select=*`);
+      if (Array.isArray(remoteData) && remoteData.length > 0 && remoteData[0]?.full_name) {
+        const row = remoteData[0];
+        return {
+          userId: row.firebase_uid || userId,
+          fullName: row.full_name || "",
+          dateOfBirth: row.birth_date || "",
+          countryOfOrigin: row.nationality || "",
+          countryOfResidence: row.country || "",
+          studyLevel: row.education_level || "Licence 3",
+          targetDegree:
+            Array.isArray(row.target_fields) && row.target_fields.length > 0
+              ? row.target_fields[0]
+              : "Master",
+          studyField: row.field_of_study || "",
+          university: row.university || "",
+          gpaScore: row.gpa ? Number(row.gpa) : 0,
+          lastDegreeGpa: row.gpa ? Number(row.gpa) : 0,
+          frenchLevel: row.french_level,
+          englishLevel: row.english_level,
+          languages: [
+            { language: "Français", level: row.french_level || "Bilingue" },
+            { language: "Anglais", level: row.english_level || "Intermédiaire" },
+          ],
+          cvUrl: row.cv_url,
+          photoUrl: row.photo_url || row.avatar_url,
+          updatedAt: row.created_at,
+        };
+      }
     }
   } catch (err) {
     console.warn("Using cached profile fallback");
   }
 
-  // 2. Local storage fallback
+  // 2. Local storage multi-level fallback
   try {
     const existing = localStorage.getItem(STORAGE_KEYS.PROFILE);
-    if (!existing) return null;
-    const profilesMap = JSON.parse(existing);
-    return profilesMap[userId] || null;
+    if (existing) {
+      const profilesMap = JSON.parse(existing);
+      if (profilesMap[effectiveId]?.fullName) return profilesMap[effectiveId];
+      if (profilesMap["guest"]?.fullName) return profilesMap["guest"];
+    }
+
+    const latest = localStorage.getItem("boursio_latest_profile");
+    if (latest) {
+      return JSON.parse(latest);
+    }
   } catch {
     return null;
   }
+
+  return null;
 }
 
 export async function toggleLikeScholarship(userId: string, bourseId: string): Promise<boolean> {

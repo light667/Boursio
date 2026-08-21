@@ -122,8 +122,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image:alt", content: "Boursio — Plateforme IA de bourses d'études" },
       // Twitter / X
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@boursio_app" },
-      { name: "twitter:creator", content: "@boursio_app" },
+      { name: "twitter:site", content: "@Boursio" },
+      { name: "twitter:creator", content: "@Boursio" },
       { name: "twitter:title", content: "Boursio — Trouvez et candidatez aux bourses d'études avec l'IA" },
       {
         name: "twitter:description",
@@ -190,10 +190,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
               },
               sameAs: [
                 "https://www.linkedin.com/company/boursio/",
-                "https://instagram.com/boursio_app",
-                "https://facebook.com/boursio.official",
-                "https://tiktok.com/@boursio.app",
-                "https://x.com/boursio_app",
+                "https://www.instagram.com/boursio.app",
+                "https://www.facebook.com/share/1bt6BbNPKq/",
+                "https://www.tiktok.com/@boursio.app",
+                "https://x.com/Boursio",
               ],
             }),
           }}

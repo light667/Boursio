@@ -1,14 +1,9 @@
 import logo from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WHATSAPP_URL } from "@/lib/site";
+import { useLang } from "@/hooks/use-lang";
 
-const LEGAL_LINKS = [
-  { label: "À propos", href: "/about.html" },
-  { label: "Mentions légales", href: "/legal.html" },
-  { label: "Politique de confidentialité", href: "/privacy.html" },
-  { label: "Conditions d'utilisation", href: "/terms.html" },
-];
-
+// ── Corrected social links ───────────────────────────────────────────────────
 const SOCIAL_LINKS = [
   {
     name: "LinkedIn",
@@ -21,7 +16,7 @@ const SOCIAL_LINKS = [
   },
   {
     name: "Instagram",
-    href: "https://instagram.com/boursio_app",
+    href: "https://www.instagram.com/boursio.app?igsh=MThramcwcnR2OWh4dw%3D%3D&utm_source=qr",
     icon: (props: React.SVGProps<SVGSVGElement>) => (
       <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
@@ -30,7 +25,7 @@ const SOCIAL_LINKS = [
   },
   {
     name: "TikTok",
-    href: "https://tiktok.com/@boursio.app",
+    href: "https://www.tiktok.com/@boursio.app?_r=1&_t=ZN-98z6Os8mhPS",
     icon: (props: React.SVGProps<SVGSVGElement>) => (
       <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .56.04.83.12V9.36a6.33 6.33 0 0 0-1-.08A6.26 6.26 0 0 0 3 15.56a6.26 6.26 0 0 0 10.7 4.41V11.8a8.21 8.21 0 0 0 5.89 2.5V10.8a4.81 4.81 0 0 1-3.77-1.61 4.83 4.83 0 0 1 3.77-2.5v-.02z" />
@@ -48,7 +43,7 @@ const SOCIAL_LINKS = [
   },
   {
     name: "Facebook",
-    href: "https://facebook.com/boursio.official",
+    href: "https://www.facebook.com/share/1bt6BbNPKq/?mibextid=wwXIfr",
     icon: (props: React.SVGProps<SVGSVGElement>) => (
       <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.12 8.44 9.88v-6.99H7.9v-2.89h2.54V9.8c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.89h-2.33v6.99C18.34 21.12 22 16.99 22 12z" />
@@ -57,7 +52,7 @@ const SOCIAL_LINKS = [
   },
   {
     name: "X / Twitter",
-    href: "https://x.com/boursio_app",
+    href: "https://x.com/Boursio",
     icon: (props: React.SVGProps<SVGSVGElement>) => (
       <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -67,6 +62,9 @@ const SOCIAL_LINKS = [
 ];
 
 export function Footer() {
+  const { lang, t } = useLang();
+  const tf = t.footer[lang];
+
   return (
     <footer className="relative border-t border-border bg-card/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -101,7 +99,7 @@ export function Footer() {
 
           {/* Theme toggle */}
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">Apparence</span>
+            <span className="text-xs text-muted-foreground">{tf.appearance}</span>
             <ThemeToggle />
           </div>
         </div>
@@ -109,10 +107,10 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-8 pt-6 border-t border-border/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-center sm:text-left">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Boursio. Tous droits réservés.
+            © {new Date().getFullYear()} Boursio. {tf.copyright}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-6">
-            {LEGAL_LINKS.map((l) => (
+            {tf.legal.map((l) => (
               <a
                 key={l.href}
                 href={l.href}

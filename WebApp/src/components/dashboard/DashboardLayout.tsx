@@ -16,6 +16,7 @@ import { DocumentsView } from "./DocumentsView";
 import { AuthModal } from "../auth/AuthModal";
 import { PaymentModal } from "../subscription/PaymentModal";
 import { PlanBadge } from "../subscription/PlanBadge";
+import { useLang } from "@/hooks/use-lang";
 import {
   Target,
   Bot,
@@ -29,7 +30,7 @@ import {
   Folder,
   LayoutDashboard,
   ArrowLeft,
-  Crown,
+  Globe,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -49,6 +50,10 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, onBackToLanding }) => {
+  const { lang, setLang, t } = useLang();
+  const td = t.dashboard[lang];
+  const tnav = td.nav;
+
   const [currentUser, setCurrentUser] = useState<User | null>(initialUser || null);
   const [activeTab, setActiveTab] = useState<Tab>("recommandations");
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
@@ -108,13 +113,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
     setIsAuthModalOpen(true);
   };
 
+  const toggleLanguage = () => {
+    setLang(lang === "fr" ? "en" : "fr");
+  };
+
   const likedBoursesList = bourses.filter((b) => likedBourseIds.includes(b.id));
 
-  // Navigation items definition — shared between sidebar and bottom nav
+  // Desktop Navigation items
   const NAV_ITEMS: { tab: Tab; label: string; Icon: LucideIcon; badge?: React.ReactNode }[] = [
     {
       tab: "recommandations",
-      label: "Recommandations",
+      label: tnav.recommandations,
       Icon: Target,
       badge: (
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary font-bold">
@@ -124,19 +133,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
     },
     {
       tab: "candidatures",
-      label: "Candidatures",
+      label: tnav.candidatures,
       Icon: LayoutDashboard,
       badge: (
         <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-500">
-          Suivi
+          {tnav.suiviBadge}
         </span>
       ),
     },
-    { tab: "coach", label: "Coach IA", Icon: Bot },
-    { tab: "dossier", label: "Mon Dossier", Icon: Folder },
+    { tab: "coach", label: tnav.coach, Icon: Bot },
+    { tab: "dossier", label: tnav.dossier, Icon: Folder },
     {
       tab: "alertes",
-      label: "Alertes",
+      label: tnav.alertes,
       Icon: Bell,
       badge:
         likedBourseIds.length > 0 ? (
@@ -145,10 +154,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
           </span>
         ) : undefined,
     },
-    { tab: "mentorat", label: "Mentorat", Icon: Users },
+    { tab: "mentorat", label: tnav.mentorat, Icon: Users },
     {
       tab: "profil",
-      label: "Profil",
+      label: tnav.profil,
       Icon: UserIcon,
       badge: studentProfile ? (
         <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -156,7 +165,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
         <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
       ),
     },
-    { tab: "parametres", label: "Paramètres", Icon: Settings },
+    { tab: "parametres", label: tnav.parametres, Icon: Settings },
+  ];
+
+  // Mobile focused bottom nav items (Core 5 tabs only)
+  const MOBILE_BOTTOM_NAV: { tab: Tab; label: string; Icon: LucideIcon; hasAlert?: boolean }[] = [
+    { tab: "recommandations", label: tnav.matchBadge, Icon: Target },
+    { tab: "candidatures", label: tnav.suiviBadge, Icon: LayoutDashboard },
+    { tab: "coach", label: tnav.coach, Icon: Bot },
+    { tab: "dossier", label: tnav.dossier, Icon: Folder },
+    {
+      tab: "mentorat",
+      label: tnav.mentorat,
+      Icon: Users,
+    },
   ];
 
   return (
@@ -172,21 +194,33 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
                 <div>
                   <span className="font-display text-xl font-bold tracking-tight text-foreground">Boursio</span>
                   <span className="block text-[10px] font-semibold text-primary uppercase tracking-wider">
-                    Bourses & Orientation
+                    {tnav.tagline}
                   </span>
                 </div>
               </div>
             </div>
 
-            {onBackToLanding && (
+            {/* Language Switcher & Back to landing */}
+            <div className="flex items-center gap-2">
+              {onBackToLanding && (
+                <button
+                  type="button"
+                  onClick={onBackToLanding}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-border/80 bg-secondary/40 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                >
+                  <ArrowLeft className="h-3 w-3" /> {tnav.returnToLanding}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={onBackToLanding}
-                className="w-full flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/40 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                onClick={toggleLanguage}
+                className="inline-flex items-center gap-1 h-7 px-2 rounded-lg border border-border bg-card text-[10px] font-bold text-foreground hover:bg-secondary transition-colors"
+                title={lang === "fr" ? "Switch to English" : "Passer en Français"}
               >
-                <ArrowLeft className="h-3 w-3" /> Retour au site vitrine
+                <Globe className="h-3 w-3 text-primary" />
+                <span>{lang === "fr" ? "🇬🇧 EN" : "🇫🇷 FR"}</span>
               </button>
-            )}
+            </div>
           </div>
 
           {/* Nav Links */}
@@ -239,10 +273,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
                 </div>
                 <div className="overflow-hidden">
                   <div className="text-xs font-bold text-foreground truncate">
-                    {studentProfile?.fullName || currentUser.email || "Étudiant Boursio"}
+                    {studentProfile?.fullName || currentUser.email || tnav.guestStudent}
                   </div>
                   <div className="text-[10px] text-muted-foreground truncate">
-                    {studentProfile?.studyLevel || "Profil en cours"}
+                    {studentProfile?.studyLevel || tnav.inProgressProfile}
                   </div>
                 </div>
               </div>
@@ -251,7 +285,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
                 onClick={handleLogout}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
               >
-                <LogOut className="h-3.5 w-3.5" /> Déconnexion
+                <LogOut className="h-3.5 w-3.5" /> {tnav.logout}
               </button>
             </div>
           ) : (
@@ -260,19 +294,95 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
               onClick={() => setIsAuthModalOpen(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 py-3 text-xs font-semibold text-white shadow-glow hover:opacity-90"
             >
-              <LogIn className="h-4 w-4" /> Se connecter / S'inscrire
+              <LogIn className="h-4 w-4" /> {tnav.loginRegister}
             </button>
           )}
         </div>
       </aside>
 
+      {/* Mobile Top Header: Profile & Settings placed in the top bar */}
+      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur-md px-4 py-2.5">
+        {/* Left: Profile & Settings quick buttons */}
+        <div className="flex items-center gap-2">
+          {/* Profile button */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("profil")}
+            className={`relative flex items-center gap-1.5 rounded-xl border p-1.5 transition-all ${
+              activeTab === "profil"
+                ? "border-primary bg-primary/10 text-primary shadow-sm"
+                : "border-border bg-secondary/60 text-muted-foreground hover:text-foreground"
+            }`}
+            title={tnav.profil}
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20 text-primary font-bold text-xs overflow-hidden shrink-0">
+              {studentProfile?.photoUrl ? (
+                <img src={studentProfile.photoUrl} alt="Avatar" className="h-full w-full object-cover" />
+              ) : studentProfile?.fullName ? (
+                studentProfile.fullName.charAt(0).toUpperCase()
+              ) : (
+                <UserIcon className="h-4 w-4" />
+              )}
+            </div>
+            {studentProfile ? (
+              <span className="h-2 w-2 rounded-full bg-emerald-500 absolute -top-0.5 -right-0.5 ring-2 ring-card" />
+            ) : (
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse absolute -top-0.5 -right-0.5 ring-2 ring-card" />
+            )}
+          </button>
+
+          {/* Settings button */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("parametres")}
+            className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-all ${
+              activeTab === "parametres"
+                ? "border-primary bg-primary text-white shadow-sm"
+                : "border-border bg-secondary/60 text-muted-foreground hover:text-foreground"
+            }`}
+            title={tnav.parametres}
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Center: Brand Logo & Title */}
+        <div className="flex items-center gap-1.5">
+          <img src={logo} alt="Boursio" className="h-6 w-6 object-contain" />
+          <span className="font-display text-sm font-bold text-foreground">Boursio</span>
+        </div>
+
+        {/* Right: Language Switcher & Back to Site */}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            className="inline-flex items-center gap-1 h-8 px-2 rounded-xl border border-border bg-secondary/60 text-xs font-bold text-foreground hover:bg-secondary transition-colors"
+          >
+            <Globe className="h-3 w-3 text-primary" />
+            <span>{lang === "fr" ? "🇬🇧 EN" : "🇫🇷 FR"}</span>
+          </button>
+
+          {onBackToLanding && (
+            <button
+              type="button"
+              onClick={onBackToLanding}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-border bg-secondary/60 text-muted-foreground hover:text-foreground"
+              title={tnav.returnToLanding}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </header>
+
       {/* Main Content Area */}
       {activeTab === "coach" ? (
-        <main className="flex flex-col flex-1 md:ml-64 h-screen overflow-hidden">
+        <main className="flex flex-col flex-1 md:ml-64 h-[calc(100vh-50px)] md:h-screen overflow-hidden">
           <CoachIAView studentProfile={studentProfile} />
         </main>
       ) : (
-        <main className="flex-1 md:ml-64 overflow-y-auto h-screen p-4 sm:p-6 md:p-8 pb-20 md:pb-8">
+        <main className="flex-1 md:ml-64 overflow-y-auto h-[calc(100vh-50px)] md:h-screen p-4 sm:p-6 md:p-8 pb-20 md:pb-8">
           {activeTab === "recommandations" && (
             <RecommandationsView
               bourses={bourses}
@@ -331,32 +441,24 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialUser, o
         </main>
       )}
 
-      {/* Mobile Bottom Navigation Bar */}
-      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md justify-around px-1 py-1.5">
-        {NAV_ITEMS.map(({ tab, label, Icon }) => {
+      {/* Mobile Focused Bottom Navigation Bar (Core 5 Tabs Only - No bottom overflow) */}
+      <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md justify-around px-2 py-1.5">
+        {MOBILE_BOTTOM_NAV.map(({ tab, label, Icon }) => {
           const active = activeTab === tab;
-          const shortLabel =
-            tab === "recommandations" ? "Match" :
-            tab === "candidatures" ? "Suivi" :
-            tab === "parametres" ? "Params" :
-            label;
 
           return (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`relative flex flex-col items-center gap-0.5 px-1 py-1 text-[9px] font-medium transition-colors ${
+              className={`relative flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium transition-colors ${
                 active ? "text-primary font-bold" : "text-muted-foreground"
               }`}
             >
               <Icon className={`h-5 w-5 ${active ? "text-primary" : ""}`} />
-              {shortLabel}
-              {tab === "alertes" && likedBourseIds.length > 0 && (
-                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-rose-500" />
-              )}
-              {tab === "profil" && !studentProfile && (
-                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+              <span>{label}</span>
+              {tab === "candidatures" && (
+                <span className="absolute top-0.5 right-1.5 h-1.5 w-1.5 rounded-full bg-blue-500" />
               )}
             </button>
           );

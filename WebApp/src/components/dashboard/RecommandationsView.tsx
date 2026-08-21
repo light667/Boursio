@@ -3,6 +3,7 @@ import { Bourse, StudentProfile } from "@/lib/types";
 import { rankBoursesForStudent } from "@/lib/matchingEngine";
 import { toggleLikeScholarship } from "@/lib/supabase";
 import { SwipeView } from "./SwipeView";
+import { useLang } from "@/hooks/use-lang";
 import {
   Heart,
   ExternalLink,
@@ -16,7 +17,6 @@ import {
   X,
   ChevronRight,
   Crown,
-  Percent,
   LayoutGrid,
   Layers,
 } from "lucide-react";
@@ -39,6 +39,9 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
   onUpdateLikes,
   onOpenProfileSetup,
 }) => {
+  const { lang, t } = useLang();
+  const tr = t.dashboard[lang].recommendations;
+
   const [viewMode, setViewMode] = useState<"grid" | "swipe">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("ALL");
@@ -46,7 +49,6 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
   const [selectedBourse, setSelectedBourse] = useState<Bourse | null>(null);
   const [showProModal, setShowProModal] = useState(false);
   const [proModalBourseTitle, setProModalBourseTitle] = useState("");
-
 
   // Rank scholarships with scoring engine
   const rankedBourses = useMemo(() => {
@@ -71,8 +73,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
           b.niveau_etude.some((l) => l.toLowerCase().includes(levelFilter.toLowerCase())));
 
       // Funding
-      const matchesFunding =
-        fundingFilter === "ALL" || (b.financement && b.financement.toUpperCase() === fundingFilter);
+      const matchesFunding = fundingFilter === "ALL" || b.financement === fundingFilter;
 
       return matchesQuery && matchesLevel && matchesFunding;
     });
@@ -105,17 +106,17 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
             <img src={logo} alt="Boursio" className="h-10 w-10 object-contain shrink-0" />
             <div>
               <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-                Recommandations de Bourses
+                {tr.title}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 {studentProfile ? (
                   <>
-                    Matching calculé pour{" "}
+                    {lang === "fr" ? "Matching calculé pour " : "Matching calculated for "}
                     <span className="font-medium text-foreground">{studentProfile.fullName}</span> (
-                    {studentProfile.studyLevel} en {studentProfile.studyField})
+                    {studentProfile.studyLevel} {lang === "fr" ? "en" : "in"} {studentProfile.studyField})
                   </>
                 ) : (
-                  "Complétez votre profil pour afficher un score de pertinence personnalisé."
+                  tr.completeProfileAlert
                 )}
               </p>
             </div>
@@ -133,7 +134,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <LayoutGrid className="h-3.5 w-3.5" /> Grille
+                <LayoutGrid className="h-3.5 w-3.5" /> {lang === "fr" ? "Grille" : "Grid"}
               </button>
               <button
                 type="button"
@@ -153,7 +154,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                 onClick={onOpenProfileSetup}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-glow hover:opacity-90"
               >
-                Configurer mon Profil
+                {tr.completeProfileBtn}
               </button>
             )}
           </div>
@@ -171,202 +172,196 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
         />
       ) : (
         <>
+          {/* Filters Bar */}
+          <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={tr.searchPlaceholder}
+                className="w-full rounded-xl border border-border bg-input pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
 
+            {/* Filter Dropdowns */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Filter className="h-4 w-4" /> {lang === "fr" ? "Filtres :" : "Filters:"}
+              </div>
 
-      {/* Filters Bar */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher une bourse, université, domaine..."
-            className="w-full rounded-xl border border-border bg-input pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-          />
-        </div>
+              <select
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value)}
+                className="rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="ALL">{tr.allDegrees}</option>
+                <option value="licence">Licence / Bachelor</option>
+                <option value="master">Master</option>
+                <option value="doctorat">Doctorat / PhD</option>
+                <option value="recherche">Recherche / Postdoc</option>
+              </select>
 
-        {/* Filter Dropdowns */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Filter className="h-4 w-4" /> Filtres:
+              <select
+                value={fundingFilter}
+                onChange={(e) => setFundingFilter(e.target.value)}
+                className="rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="ALL">{lang === "fr" ? "Tous les Financements" : "All Funding Types"}</option>
+                <option value="TOTAL">{lang === "fr" ? "Totalement Financée (TOTAL)" : "Fully Funded (100%)"}</option>
+                <option value="PARTIEL">{lang === "fr" ? "Partiellement Financée (PARTIEL)" : "Partially Funded"}</option>
+              </select>
+            </div>
           </div>
 
-          <select
-            value={levelFilter}
-            onChange={(e) => setLevelFilter(e.target.value)}
-            className="rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
-          >
-            <option value="ALL">Tous les Niveaux</option>
-            <option value="licence">Licence</option>
-            <option value="master">Master</option>
-            <option value="doctorat">Doctorat</option>
-            <option value="recherche">Recherche</option>
-          </select>
+          {/* Results Count */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{filteredBourses.length} {lang === "fr" ? "bourses trouvées" : "scholarships found"}</span>
+          </div>
 
-          <select
-            value={fundingFilter}
-            onChange={(e) => setFundingFilter(e.target.value)}
-            className="rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
-          >
-            <option value="ALL">Tous les Financements</option>
-            <option value="TOTAL">Totalement Financée (TOTAL)</option>
-            <option value="PARTIEL">Partiellement Financée (PARTIEL)</option>
-          </select>
-        </div>
-      </div>
+          {/* Scholarships Grid */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+            {filteredBourses.map((bourse) => {
+              const isLiked = likedBourseIds.includes(bourse.id);
+              const matchScore = bourse.matchScore || 50;
 
-      {/* Results Count */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{filteredBourses.length} bourses trouvées</span>
-      </div>
-
-      {/* Scholarships Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-        {filteredBourses.map((bourse) => {
-          const isLiked = likedBourseIds.includes(bourse.id);
-          const matchScore = bourse.matchScore || 50;
-
-          return (
-            <div
-              key={bourse.id}
-              onClick={() => setSelectedBourse(bourse)}
-              className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-card transition-all hover:border-primary/50 hover:shadow-glow cursor-pointer"
-            >
-              <div>
-                {/* Header: Score Badge & Actions */}
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  {/* Match Percentage Badge */}
-                  <div
-                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${
-                      matchScore >= 80
-                        ? "bg-primary/15 text-primary border border-primary/30"
-                        : matchScore >= 60
-                          ? "bg-blue-500/15 text-blue-500 border border-blue-500/30"
-                          : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-        
-                    <span>{matchScore}% Match</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {/* Like / Heart Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => handleToggleLike(bourse.id, e)}
-                      title={
-                        isLiked ? "Retirer des favoris" : "Ajouter aux favoris (Notifications)"
-                      }
-                      className={`rounded-full p-2 transition-transform hover:scale-110 ${
-                        isLiked
-                          ? "bg-rose-500/20 text-rose-500 border border-rose-500/40"
-                          : "bg-secondary/80 text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Heart className={`h-4 w-4 ${isLiked ? "fill-rose-500" : ""}`} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Title & University */}
-                <h3 className="font-display text-lg font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                  {bourse.titre}
-                </h3>
-
-                {bourse.universite && (
-                  <p className="mt-1 text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" /> {bourse.universite}
-                  </p>
-                )}
-
-                {/* Badges / Domains & Levels */}
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {bourse.financement === "TOTAL" && (
-                    <span className="rounded-md bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                      Totalement Financée
-                    </span>
-                  )}
-                  {bourse.africains_eligibles && (
-                    <span className="rounded-md bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                      Afrique Éligible
-                    </span>
-                  )}
-                  {Array.isArray(bourse.niveau_etude) &&
-                    bourse.niveau_etude.slice(0, 2).map((lvl) => (
-                      <span
-                        key={lvl}
-                        className="rounded-md bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-foreground uppercase"
+              return (
+                <div
+                  key={bourse.id}
+                  onClick={() => setSelectedBourse(bourse)}
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-card transition-all hover:border-primary/50 hover:shadow-glow cursor-pointer"
+                >
+                  <div>
+                    {/* Header: Score Badge & Actions */}
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div
+                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${
+                          matchScore >= 80
+                            ? "bg-primary/15 text-primary border border-primary/30"
+                            : matchScore >= 60
+                              ? "bg-blue-500/15 text-blue-500 border border-blue-500/30"
+                              : "bg-muted text-muted-foreground"
+                        }`}
                       >
-                        {lvl}
-                      </span>
-                    ))}
-                </div>
-
-                {/* Description Snippet */}
-                <p className="mt-3 text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                  {bourse.description}
-                </p>
-
-                {/* Match Highlight Reasons */}
-                {bourse.matchReasons && bourse.matchReasons.length > 0 && (
-                  <div className="mt-4 rounded-xl border border-primary/10 bg-primary/5 p-2.5 space-y-1">
-                    {bourse.matchReasons.slice(0, 2).map((reason, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 text-[11px] text-primary">
-                        <CheckCircle2 className="h-3 w-3 shrink-0" />
-                        <span className="line-clamp-1">{reason}</span>
+                        <span>{matchScore}% {tr.matchScoreLabel}</span>
                       </div>
-                    ))}
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleLike(bourse.id, e)}
+                          title={
+                            isLiked
+                              ? (lang === "fr" ? "Retirer des favoris" : "Remove from favorites")
+                              : (lang === "fr" ? "Ajouter aux favoris" : "Add to favorites")
+                          }
+                          className={`rounded-full p-2 transition-transform hover:scale-110 ${
+                            isLiked
+                              ? "bg-rose-500/20 text-rose-500 border border-rose-500/40"
+                              : "bg-secondary/80 text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Heart className={`h-4 w-4 ${isLiked ? "fill-rose-500" : ""}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Title & University */}
+                    <h3 className="font-display text-lg font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                      {bourse.titre}
+                    </h3>
+
+                    {bourse.universite && (
+                      <p className="mt-1 text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" /> {bourse.universite}
+                      </p>
+                    )}
+
+                    {/* Badges / Domains & Levels */}
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {bourse.financement === "TOTAL" && (
+                        <span className="rounded-md bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                          {lang === "fr" ? "Totalement Financée" : "100% Fully Funded"}
+                        </span>
+                      )}
+                      {bourse.africains_eligibles && (
+                        <span className="rounded-md bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                          {lang === "fr" ? "Afrique Éligible" : "Africa Eligible"}
+                        </span>
+                      )}
+                      {Array.isArray(bourse.niveau_etude) &&
+                        bourse.niveau_etude.slice(0, 2).map((lvl) => (
+                          <span
+                            key={lvl}
+                            className="rounded-md bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-foreground uppercase"
+                          >
+                            {lvl}
+                          </span>
+                        ))}
+                    </div>
+
+                    {/* Description Snippet */}
+                    <p className="mt-3 text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                      {bourse.description}
+                    </p>
+
+                    {/* Match Highlight Reasons */}
+                    {bourse.matchReasons && bourse.matchReasons.length > 0 && (
+                      <div className="mt-4 rounded-xl border border-primary/10 bg-primary/5 p-2.5 space-y-1">
+                        {bourse.matchReasons.slice(0, 2).map((reason, idx) => (
+                          <div key={idx} className="flex items-center gap-1.5 text-[11px] text-primary">
+                            <CheckCircle2 className="h-3 w-3 shrink-0" />
+                            <span className="line-clamp-1">{reason}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Bottom Footer & Action Buttons */}
-              <div className="mt-6 border-t border-border/60 pt-4 flex flex-col gap-2">
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5 text-primary" />
-                    {bourse.deadline_raw || bourse.deadline || "Date non spécifiée"}
-                  </span>
-                  {bourse.montant_bourse && (
-                    <span className="font-semibold text-foreground flex items-center gap-0.5">
-                      <DollarSign className="h-3.5 w-3.5 text-primary" /> {bourse.montant_bourse}
-                    </span>
-                  )}
+                  {/* Bottom Footer & Action Buttons */}
+                  <div className="mt-6 border-t border-border/60 pt-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-primary" />
+                        {bourse.deadline_raw || bourse.deadline || (lang === "fr" ? "Date non spécifiée" : "Rolling basis")}
+                      </span>
+                      {bourse.montant_bourse && (
+                        <span className="font-semibold text-foreground flex items-center gap-0.5">
+                          <DollarSign className="h-3.5 w-3.5 text-primary" /> {bourse.montant_bourse}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <a
+                        href={bourse.lien_candidature || bourse.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-secondary py-2.5 text-xs font-semibold text-foreground hover:bg-secondary/80 transition-colors"
+                      >
+                        {lang === "fr" ? "Postuler" : "Apply"} <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleApplyWithAI(bourse.titre, e)}
+                        className="relative group/pro inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-blue-600 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-all overflow-hidden"
+                      >
+                        <Bot className="h-3.5 w-3.5 text-white" /> {lang === "fr" ? "Postuler via IA" : "Apply via AI"}
+                        <span className="absolute -top-1 -right-1 flex h-5 items-center gap-0.5 rounded-bl-lg rounded-tr-xl bg-amber-500 px-1.5 text-[9px] font-extrabold uppercase text-slate-950 shadow-sm">
+                          <Crown className="h-2.5 w-2.5" /> PRO
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Direct Apply Button */}
-                  <a
-                    href={bourse.lien_candidature || bourse.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-secondary py-2.5 text-xs font-semibold text-foreground hover:bg-secondary/80 transition-colors"
-                  >
-                    Postuler <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-
-                  {/* AI Agent Apply Button with PRO badge */}
-                  <button
-                    type="button"
-                    onClick={(e) => handleApplyWithAI(bourse.titre, e)}
-                    className="relative group/pro inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-blue-600 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-all overflow-hidden"
-                  >
-                    <Bot className="h-3.5 w-3.5 text-white" /> Postuler avec l'Agent IA
-                    {/* PRO Badge */}
-                    <span className="absolute -top-1 -right-1 flex h-5 items-center gap-0.5 rounded-bl-lg rounded-tr-xl bg-amber-500 px-1.5 text-[9px] font-extrabold uppercase text-slate-950 shadow-sm">
-                      <Crown className="h-2.5 w-2.5" /> PRO
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      </>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Scholarship Detail Drawer Modal */}
@@ -384,11 +379,11 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold text-primary border border-primary/30">
-                  {selectedBourse.matchScore}% Correspondance
+                  {selectedBourse.matchScore}% {tr.matchScoreLabel}
                 </span>
                 {selectedBourse.financement === "TOTAL" && (
                   <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                    Bourse Totale
+                    {lang === "fr" ? "Bourse Totale" : "Full Scholarship"}
                   </span>
                 )}
               </div>
@@ -406,7 +401,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
             {Array.isArray(selectedBourse.couverture) && selectedBourse.couverture.length > 0 && (
               <div className="rounded-xl border border-border bg-secondary/50 p-4 space-y-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                  <DollarSign className="h-4 w-4 text-primary" /> Couverture Financière & Avantages
+                  <DollarSign className="h-4 w-4 text-primary" /> {lang === "fr" ? "Couverture Financière & Avantages" : "Financial Coverage & Benefits"}
                 </h4>
                 <ul className="space-y-1.5 text-xs text-muted-foreground">
                   {selectedBourse.couverture.map((c, i) => (
@@ -423,7 +418,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
             {Array.isArray(selectedBourse.criteres) && selectedBourse.criteres.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Critères d'Éligibilité
+                  {lang === "fr" ? "Critères d'Éligibilité" : "Eligibility Criteria"}
                 </h4>
                 <ul className="space-y-1.5 text-xs text-muted-foreground">
                   {selectedBourse.criteres.map((c, i) => (
@@ -439,7 +434,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
             {/* Description */}
             <div className="space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                Description Complète
+                {lang === "fr" ? "Description Complète" : "Full Description"}
               </h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {selectedBourse.description}
@@ -453,7 +448,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                 onClick={() => handleApplyWithAI(selectedBourse.titre)}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-3 text-xs font-bold text-slate-950 shadow-glow"
               >
-                <Crown className="h-4 w-4" /> Postuler avec Agent IA (Mode Pro)
+                <Crown className="h-4 w-4" /> {lang === "fr" ? "Postuler avec Agent IA (Mode Pro)" : "Apply with AI Agent (Pro)"}
               </button>
 
               <a
@@ -462,14 +457,14 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
                 rel="noreferrer"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-xs font-semibold text-white hover:bg-primary/90"
               >
-                Accéder au Site Officiel <ExternalLink className="h-4 w-4" />
+                {lang === "fr" ? "Accéder au Site Officiel" : "Visit Official Website"} <ExternalLink className="h-4 w-4" />
               </a>
             </div>
           </div>
         </div>
       )}
 
-      {/* PRO Badge Modal (Disponible Bientôt) */}
+      {/* PRO Badge Modal */}
       {showProModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-amber-500/30 bg-card p-6 text-center shadow-2xl sm:p-8 space-y-4">
@@ -487,10 +482,10 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
 
             <div className="space-y-1">
               <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                Option Pro Boursio
+                {lang === "fr" ? "Option Pro Boursio" : "Boursio Pro Feature"}
               </span>
               <h3 className="font-display text-xl font-bold text-foreground">
-                Disponible très bientôt !
+                {lang === "fr" ? "Disponible très bientôt !" : "Coming very soon!"}
               </h3>
               {proModalBourseTitle && (
                 <p className="text-xs font-medium text-primary line-clamp-1">
@@ -500,17 +495,18 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed">
-              L'agent IA autonome de candidature automatisée soumettra vos formulaires, rédigera vos
-              essais et vérifiera vos pièces justificatives automatiquement pour chaque bourse.
+              {lang === "fr"
+                ? "L'agent IA autonome de candidature automatisée soumettra vos formulaires, rédigera vos essais et vérifiera vos pièces justificatives automatiquement pour chaque bourse."
+                : "The autonomous AI application agent will fill your forms, draft tailored essays, and verify required attachments automatically for each scholarship."}
             </p>
 
             <div className="rounded-xl border border-border bg-secondary/50 p-3 text-left text-xs space-y-1.5 text-muted-foreground">
               <div className="flex items-center gap-2 text-foreground font-semibold">
-                <Bot className="h-4 w-4 text-primary" /> Fonctionnalités Pro en préparation :
+                <Bot className="h-4 w-4 text-primary" /> {lang === "fr" ? "Fonctionnalités Pro en préparation :" : "Upcoming Pro features:"}
               </div>
-              <div>• Soumission automatisée des dossiers</div>
-              <div>• Génération dynamique des pièces manquantes</div>
-              <div>• Suivi direct par agent virtuel 24/7</div>
+              <div>• {lang === "fr" ? "Soumission automatisée des dossiers" : "Automated application submissions"}</div>
+              <div>• {lang === "fr" ? "Génération dynamique des pièces manquantes" : "Dynamic generation of required docs"}</div>
+              <div>• {lang === "fr" ? "Suivi direct par agent virtuel 24/7" : "24/7 dedicated AI agent follow-up"}</div>
             </div>
 
             <button
@@ -518,7 +514,7 @@ export const RecommandationsView: React.FC<RecommandationsViewProps> = ({
               onClick={() => setShowProModal(false)}
               className="w-full rounded-xl bg-gradient-to-r from-primary to-blue-600 py-3 text-sm font-semibold text-white shadow-glow hover:opacity-90"
             >
-              Compris, j'attends la version Pro !
+              {lang === "fr" ? "Compris, j'attends la version Pro !" : "Got it, excited for Pro!"}
             </button>
           </div>
         </div>

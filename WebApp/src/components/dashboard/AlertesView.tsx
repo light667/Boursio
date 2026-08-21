@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { UserNotification, Bourse } from "@/lib/types";
 import { getUserNotifications, markNotificationAsRead } from "@/lib/supabase";
+import { useLang } from "@/hooks/use-lang";
 import {
   Bell,
   CheckCircle,
@@ -21,6 +22,9 @@ interface AlertesViewProps {
 }
 
 export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }) => {
+  const { lang, t } = useLang();
+  const ta = t.dashboard[lang].alerts;
+
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [pushNotifs, setPushNotifs] = useState(true);
@@ -45,11 +49,10 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
           <img src={logo} alt="Boursio" className="h-10 w-10 object-contain shrink-0" />
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-              Alertes & Deadlines
+              {ta.title}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Recevez des notifications ciblées sur vos bourses favorites et les dates limites
-              importantes.
+              {ta.subtitle}
             </p>
           </div>
         </div>
@@ -58,7 +61,7 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
       {/* Notification Settings Bar */}
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
         <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-          <Sliders className="h-4 w-4 text-primary" /> Canaux d'Alerte et Fréquence
+          <Sliders className="h-4 w-4 text-primary" /> {lang === "fr" ? "Canaux d'Alerte et Fréquence" : "Alert Channels & Frequency"}
         </h3>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -67,8 +70,8 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-primary" />
               <div>
-                <div className="text-xs font-semibold text-foreground">Alertes par E-mail</div>
-                <div className="text-[11px] text-muted-foreground">Récapitulatif des deadlines</div>
+                <div className="text-xs font-semibold text-foreground">{lang === "fr" ? "Alertes par E-mail" : "Email Alerts"}</div>
+                <div className="text-[11px] text-muted-foreground">{lang === "fr" ? "Récapitulatif des deadlines" : "Deadline summaries"}</div>
               </div>
             </div>
             <input
@@ -84,8 +87,8 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
             <div className="flex items-center gap-3">
               <Smartphone className="h-5 w-5 text-primary" />
               <div>
-                <div className="text-xs font-semibold text-foreground">Notifications Mobile</div>
-                <div className="text-[11px] text-muted-foreground">Alertes directes smartphone</div>
+                <div className="text-xs font-semibold text-foreground">{lang === "fr" ? "Notifications Mobile" : "Mobile Push"}</div>
+                <div className="text-[11px] text-muted-foreground">{lang === "fr" ? "Alertes directes smartphone" : "Direct smartphone alerts"}</div>
               </div>
             </div>
             <input
@@ -98,14 +101,14 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
 
           {/* Frequency Selector */}
           <div className="flex flex-col justify-center rounded-xl border border-border bg-secondary/50 p-4">
-            <div className="text-xs font-semibold text-foreground mb-1">Fréquence de rappel</div>
+            <div className="text-xs font-semibold text-foreground mb-1">{lang === "fr" ? "Fréquence de rappel" : "Reminder Frequency"}</div>
             <select
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as "daily" | "weekly")}
               className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
             >
-              <option value="daily">Chaque jour (Quotidien)</option>
-              <option value="weekly">Chaque semaine (Hebdomadaire)</option>
+              <option value="daily">{lang === "fr" ? "Chaque jour (Quotidien)" : "Every day (Daily)"}</option>
+              <option value="weekly">{lang === "fr" ? "Chaque semaine (Hebdomadaire)" : "Every week (Weekly)"}</option>
             </select>
           </div>
         </div>
@@ -115,18 +118,17 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-            <Heart className="h-4 w-4 text-rose-500 fill-rose-500" /> Bourses Suivies (
+            <Heart className="h-4 w-4 text-rose-500 fill-rose-500" /> {lang === "fr" ? "Bourses Suivies" : "Tracked Scholarships"} (
             {likedBourses.length})
           </h3>
-          <span className="text-xs text-muted-foreground">Suivi automatique des dates limites</span>
+          <span className="text-xs text-muted-foreground">{lang === "fr" ? "Suivi automatique des dates limites" : "Automated deadline tracking"}</span>
         </div>
 
         {likedBourses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
             <Info className="h-8 w-8 text-muted-foreground" />
             <p className="text-xs text-muted-foreground max-w-sm">
-              Vous n'avez pas encore aimé de bourse. Cliquez sur le cœur d'une bourse dans les
-              Recommandations pour l'ajouter à votre liste de suivi.
+              {ta.noAlerts}
             </p>
           </div>
         ) : (
@@ -140,7 +142,7 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
                   <h4 className="text-xs font-bold text-foreground line-clamp-1">{b.titre}</h4>
                   <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1">
                     <Calendar className="h-3 w-3 text-primary" />{" "}
-                    {b.deadline_raw || b.deadline || "Date à venir"}
+                    {b.deadline_raw || b.deadline || (lang === "fr" ? "Date à venir" : "Upcoming")}
                   </p>
                 </div>
                 <a
@@ -160,12 +162,12 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
       {/* Notifications Feed */}
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
         <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-          <Clock className="h-4 w-4 text-primary" /> Notifications
+          <Clock className="h-4 w-4 text-primary" /> {lang === "fr" ? "Notifications Récentes" : "Recent Notifications"}
         </h3>
 
         {notifications.length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">
-            Aucune notification récente. Vos prochaines alertes apparaîtront ici.
+            {lang === "fr" ? "Aucune notification récente. Vos prochaines alertes apparaîtront ici." : "No recent notifications. Upcoming alerts will appear here."}
           </p>
         ) : (
           <div className="space-y-3">
@@ -209,7 +211,7 @@ export const AlertesView: React.FC<AlertesViewProps> = ({ userId, likedBourses }
                 {!notif.read && (
                   <button
                     type="button"
-                    title="Marquer comme lu"
+                    title={lang === "fr" ? "Marquer comme lu" : "Mark as read"}
                     className="p-1 text-muted-foreground hover:text-primary"
                   >
                     <CheckCircle className="h-4 w-4" />

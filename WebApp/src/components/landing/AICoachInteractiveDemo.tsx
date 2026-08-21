@@ -1,40 +1,25 @@
 import React, { useState } from "react";
-import { Bot, Send, Sparkles, User, Check, ArrowRight, CornerDownLeft } from "lucide-react";
+import { Bot, Send, User, ArrowRight } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { useLang } from "@/hooks/use-lang";
 
 interface AICoachInteractiveDemoProps {
   onLaunchApp?: () => void;
 }
 
-const PRESET_QUESTIONS = [
-  {
-    label: "Demande de Passeport Togo 🇹🇬",
-    question: "Quelles sont les pièces et démarches pour un passeport togolais à la DGDN ?",
-    answer:
-      "Pour une première demande à la DGDN au Togo :\n- Certificat de nationalité original + duplicata légalisé\n- Certificat de naissance + CNI\n- Attestation de personne à prévenir légalisée\n- Preuve de profession (diplôme ou attestation)\n- 2 photos fond blanc + Quittance de 30.000 F CFA payée en ligne\n\nBoursio vous aide à vérifier tout votre dossier avant dépôt physique !",
-  },
-  {
-    label: "Accroche Lettre Bourse Eiffel 🇫🇷",
-    question: "Comment structurer mon paragraphe de motivation pour la bourse Eiffel ?",
-    answer:
-      "Pour la bourse Eiffel :\n1. Présentez votre projet d'études précis en France et son inscription dans les priorités de votre pays d'origine.\n2. Mettez en valeur votre rang/mention académique.\n3. Expliquez la plus-value de l'établissement français d'accueil.\n\nDans l'application Boursio, notre générateur IA rédige votre lettre intégrale en 30 secondes.",
-  },
-  {
-    label: "Financement Bourse Canada 🇨🇦",
-    question: "Existe-t-il des bourses d'exemption pour étudier au Québec ?",
-    answer:
-      "Oui ! Les bourses d'exemption des droits de scolarité majorés permettent aux étudiants internationaux de payer les mêmes frais que les étudiants québécois (économie de 15.000$ à 25.000$ CAD/an). Boursio identifie les universités partenaires éligibles.",
-  },
-];
-
 export const AICoachInteractiveDemo: React.FC<AICoachInteractiveDemoProps> = ({ onLaunchApp }) => {
+  const { lang, t } = useLang();
+  const tc = t.aiCoachDemo[lang];
+
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [customInput, setCustomInput] = useState("");
   const [customQA, setCustomQA] = useState<{ q: string; a: string } | null>(null);
 
+  const presetQuestions = tc.questions;
+
   const activeQA = customQA || {
-    q: PRESET_QUESTIONS[selectedIdx].question,
-    a: PRESET_QUESTIONS[selectedIdx].answer,
+    q: presetQuestions[selectedIdx]?.question || presetQuestions[0].question,
+    a: presetQuestions[selectedIdx]?.answer || presetQuestions[0].answer,
   };
 
   const handleCustomSubmit = (e: React.FormEvent) => {
@@ -43,7 +28,7 @@ export const AICoachInteractiveDemo: React.FC<AICoachInteractiveDemoProps> = ({ 
 
     setCustomQA({
       q: customInput,
-      a: `Merci pour votre question ! L'IA Boursio analyse les critères spécifiques pour "${customInput}". Dans l'application complète, notre Coach IA connecté aux bases officielles de plus de 50 pays vous fournit les démarches exactes, les formulaires téléchargeables et la relecture de vos écrits.`,
+      a: `${tc.customAnswerPrefix}${customInput}${tc.customAnswerSuffix}`,
     });
     setCustomInput("");
   };
@@ -56,26 +41,24 @@ export const AICoachInteractiveDemo: React.FC<AICoachInteractiveDemoProps> = ({ 
           <div className="lg:col-span-5 space-y-6">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary">
               <Bot className="h-4 w-4" />
-              <span>COACH IA ACADÉMIQUE 24H/24</span>
+              <span>{tc.badge}</span>
             </div>
 
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-              Un Expert Bourses & Visas dans votre Poche
+              {tc.title}
             </h2>
 
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Entraîné sur les directives officielles des ambassades, des ministères et des programmes
-              de bourses d'excellence, le Coach IA Boursio répond avec une précision chirurgicale à
-              chacune de vos questions.
+              {tc.sub}
             </p>
 
             {/* Quick chips selector */}
             <div className="space-y-2 pt-2">
               <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                Essayez une question type :
+                {tc.sampleLabel}
               </span>
               <div className="flex flex-col gap-2">
-                {PRESET_QUESTIONS.map((q, idx) => (
+                {presetQuestions.map((q, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -100,7 +83,7 @@ export const AICoachInteractiveDemo: React.FC<AICoachInteractiveDemoProps> = ({ 
               onClick={onLaunchApp}
               className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3.5 text-xs font-bold text-white shadow-glow hover:opacity-90 transition-all"
             >
-              <span>Discuter en direct avec le Coach IA</span>
+              <span>{tc.cta}</span>
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -115,15 +98,15 @@ export const AICoachInteractiveDemo: React.FC<AICoachInteractiveDemoProps> = ({ 
                 </div>
                 <div>
                   <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    Coach IA Boursio
+                    {tc.coachTitle}
                     <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   </div>
-                  <div className="text-[10px] text-muted-foreground">Expert bourses internationales</div>
+                  <div className="text-[10px] text-muted-foreground">{tc.coachSub}</div>
                 </div>
               </div>
 
               <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold text-muted-foreground border border-border">
-                Démo Live Active
+                {tc.liveDemo}
               </span>
             </div>
 
@@ -156,7 +139,7 @@ export const AICoachInteractiveDemo: React.FC<AICoachInteractiveDemoProps> = ({ 
                 type="text"
                 value={customInput}
                 onChange={(e) => setCustomInput(e.target.value)}
-                placeholder="Posez n'importe quelle question sur vos bourses..."
+                placeholder={tc.inputPlaceholder}
                 className="flex-1 rounded-xl border border-border bg-input px-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
               <button
@@ -164,7 +147,7 @@ export const AICoachInteractiveDemo: React.FC<AICoachInteractiveDemoProps> = ({ 
                 className="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-glow hover:opacity-90 shrink-0 inline-flex items-center gap-1"
               >
                 <Send className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Tester</span>
+                <span className="hidden sm:inline">{tc.testBtn}</span>
               </button>
             </form>
           </div>

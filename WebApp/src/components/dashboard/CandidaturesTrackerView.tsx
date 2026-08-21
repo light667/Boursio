@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ScholarshipApplication, ApplicationStatus, Bourse, DocumentType } from "@/lib/types";
 import { toast } from "sonner";
+import { useLang } from "@/hooks/use-lang";
 import {
   LayoutDashboard,
   Plus,
@@ -26,64 +27,14 @@ interface CandidaturesTrackerViewProps {
   onOpenCoach?: () => void;
 }
 
-const STATUS_COLUMNS: {
-  status: ApplicationStatus;
-  label: string;
-  color: string;
-  badgeBg: string;
-  icon: React.ComponentType<{ className?: string }>;
-}[] = [
-  {
-    status: "draft",
-    label: "À Préparer",
-    color: "text-muted-foreground",
-    badgeBg: "bg-secondary border-border",
-    icon: Clock,
-  },
-  {
-    status: "in_progress",
-    label: "En Rédaction",
-    color: "text-blue-500",
-    badgeBg: "bg-blue-500/10 border-blue-500/30 text-blue-500",
-    icon: FileText,
-  },
-  {
-    status: "submitted",
-    label: "Dossier Déposé",
-    color: "text-purple-500",
-    badgeBg: "bg-purple-500/10 border-purple-500/30 text-purple-500",
-    icon: Send,
-  },
-  {
-    status: "interview",
-    label: "Entretien Jury",
-    color: "text-amber-500",
-    badgeBg: "bg-amber-500/10 border-amber-500/30 text-amber-500",
-    icon: UserCheck,
-  },
-  {
-    status: "accepted",
-    label: "Bourse Obtenue 🎉",
-    color: "text-emerald-500",
-    badgeBg: "bg-emerald-500/15 border-emerald-500/30 text-emerald-500 font-bold",
-    icon: Award,
-  },
-];
-
-const DEFAULT_CHECKLIST: { id: string; label: string; requiredDocType?: DocumentType }[] = [
-  { id: "c1", label: "Certificat de Nationalité / CNI", requiredDocType: "Nationalité" },
-  { id: "c2", label: "Passeport en cours de validité", requiredDocType: "Passeport" },
-  { id: "c3", label: "Relevés de notes officiels & Bulletins", requiredDocType: "Relevé de notes" },
-  { id: "c4", label: "Curriculum Vitae (Format International)", requiredDocType: "CV" },
-  { id: "c5", label: "Lettre de Motivation personnalisée", requiredDocType: "Lettre de motivation" },
-  { id: "c6", label: "Diplôme officiel ou Attestation de succès", requiredDocType: "Diplôme" },
-];
-
 export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = ({
   userId,
   likedBourses,
   onOpenCoach,
 }) => {
+  const { lang, t } = useLang();
+  const tc = t.dashboard[lang].candidatures;
+
   const storageKey = `boursio_applications_${userId || "guest"}`;
   const [applications, setApplications] = useState<ScholarshipApplication[]>([]);
   const [showNewModal, setShowNewModal] = useState(false);
@@ -93,6 +44,59 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
   const [customDeadline, setCustomDeadline] = useState("");
   const [activeAppDetail, setActiveAppDetail] = useState<ScholarshipApplication | null>(null);
 
+  const STATUS_COLUMNS: {
+    status: ApplicationStatus;
+    label: string;
+    color: string;
+    badgeBg: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
+    {
+      status: "draft",
+      label: tc.columns.toPrepare,
+      color: "text-muted-foreground",
+      badgeBg: "bg-secondary border-border",
+      icon: Clock,
+    },
+    {
+      status: "in_progress",
+      label: tc.columns.drafting,
+      color: "text-blue-500",
+      badgeBg: "bg-blue-500/10 border-blue-500/30 text-blue-500",
+      icon: FileText,
+    },
+    {
+      status: "submitted",
+      label: tc.columns.submitted,
+      color: "text-purple-500",
+      badgeBg: "bg-purple-500/10 border-purple-500/30 text-purple-500",
+      icon: Send,
+    },
+    {
+      status: "interview",
+      label: tc.columns.interview,
+      color: "text-amber-500",
+      badgeBg: "bg-amber-500/10 border-amber-500/30 text-amber-500",
+      icon: UserCheck,
+    },
+    {
+      status: "accepted",
+      label: tc.columns.accepted,
+      color: "text-emerald-500",
+      badgeBg: "bg-emerald-500/15 border-emerald-500/30 text-emerald-500 font-bold",
+      icon: Award,
+    },
+  ];
+
+  const DEFAULT_CHECKLIST: { id: string; label: string; requiredDocType?: DocumentType }[] = [
+    { id: "c1", label: lang === "fr" ? "Certificat de Nationalité / CNI" : "Nationality Certificate / ID Card", requiredDocType: "Nationalité" },
+    { id: "c2", label: lang === "fr" ? "Passeport en cours de validité" : "Valid Passport", requiredDocType: "Passeport" },
+    { id: "c3", label: lang === "fr" ? "Relevés de notes officiels & Bulletins" : "Official Academic Transcripts", requiredDocType: "Relevé de notes" },
+    { id: "c4", label: lang === "fr" ? "Curriculum Vitae (Format International)" : "Curriculum Vitae (International ATS Format)", requiredDocType: "CV" },
+    { id: "c5", label: lang === "fr" ? "Lettre de Motivation personnalisée" : "Personalized Motivation Letter", requiredDocType: "Lettre de motivation" },
+    { id: "c6", label: lang === "fr" ? "Diplôme officiel ou Attestation de succès" : "Official Degree or Completion Certificate", requiredDocType: "Diplôme" },
+  ];
+
   // Load from local storage
   useEffect(() => {
     try {
@@ -100,149 +104,151 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
       if (raw) {
         setApplications(JSON.parse(raw));
       } else {
-        // Initial sample application if user has liked bourses
-        if (likedBourses.length > 0) {
-          const sample: ScholarshipApplication = {
-            id: `app_${Date.now()}`,
+        // Initial state with Eiffel if liked, or empty clean state
+        const initial: ScholarshipApplication[] = [
+          {
+            id: "app_1",
             userId: userId || "guest",
-            bourseId: likedBourses[0].id,
-            bourseTitre: likedBourses[0].titre,
-            universite: likedBourses[0].universite || "Université d'Accueil",
-            country: Array.isArray(likedBourses[0].pays_destination)
-              ? likedBourses[0].pays_destination[0]
-              : likedBourses[0].pays_destination || "International",
-            deadline: likedBourses[0].deadline_raw || likedBourses[0].deadline || "Prochainement",
+            bourseId: "eiffel-2026",
+            bourseTitre: "Bourse d'Excellence Eiffel (Campus France)",
+            universite: "Sorbonne Université & Grandes Écoles",
+            country: "France 🇫🇷",
             status: "in_progress",
-            checklist: DEFAULT_CHECKLIST.map((item, i) => ({
-              ...item,
-              completed: i < 2,
+            deadline: "Janvier 2026",
+            notes: "Vérifier la convention de l'établissement d'accueil avant le dépôt.",
+            checklist: DEFAULT_CHECKLIST.map((c) => ({
+              ...c,
+              completed: c.id === "c1" || c.id === "c2" || c.id === "c4",
             })),
-            notes: "Candidature en cours de constitution. Relire la lettre de motivation avec le Coach IA.",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-          };
-          setApplications([sample]);
-          localStorage.setItem(storageKey, JSON.stringify([sample]));
-        }
+          },
+        ];
+        setApplications(initial);
+        localStorage.setItem(storageKey, JSON.stringify(initial));
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      setApplications([]);
     }
-  }, [userId, likedBourses]);
+  }, [storageKey, userId]);
 
   const saveApplications = (updated: ScholarshipApplication[]) => {
     setApplications(updated);
     try {
       localStorage.setItem(storageKey, JSON.stringify(updated));
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error("Error saving applications:", err);
     }
   };
 
   const handleCreateApplication = (e: React.FormEvent) => {
     e.preventDefault();
-    let title = customTitle;
-    let univ = customUniv;
-    let deadline = customDeadline;
+    let title = customTitle.trim();
+    let univ = customUniv.trim();
+    let deadline = customDeadline.trim();
+    let bourseId = "custom";
     let country = "International";
 
     if (selectedBourseId) {
       const b = likedBourses.find((item) => item.id === selectedBourseId);
       if (b) {
         title = b.titre;
-        univ = b.universite || univ;
-        deadline = b.deadline_raw || b.deadline || deadline;
-        country = Array.isArray(b.pays_destination) ? b.pays_destination[0] : b.pays_destination || country;
+        univ = b.universite || "";
+        deadline = b.deadline || "";
+        bourseId = b.id;
+        country = Array.isArray(b.pays_destination)
+          ? b.pays_destination.join(", ")
+          : b.pays_destination || "International";
       }
     }
 
-    if (!title.trim()) {
-      toast.error("Veuillez renseigner le nom de la bourse ciblée.");
+    if (!title) {
+      toast.error(lang === "fr" ? "Veuillez renseigner le nom de la bourse." : "Please enter scholarship name.");
       return;
     }
 
     const newApp: ScholarshipApplication = {
-      id: `app_${Date.now()}`,
+      id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       userId: userId || "guest",
-      bourseId: selectedBourseId || "custom",
-      bourseTitre: title.trim(),
-      universite: univ.trim() || undefined,
+      bourseId,
+      bourseTitre: title,
+      universite: univ,
       country,
-      deadline: deadline || "À définir",
       status: "draft",
-      checklist: DEFAULT_CHECKLIST.map((item) => ({ ...item, completed: false })),
-      notes: "",
+      deadline: deadline || "2026",
+      checklist: DEFAULT_CHECKLIST.map((c) => ({ ...c, completed: false })),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    saveApplications([newApp, ...applications]);
+    const updated = [newApp, ...applications];
+    saveApplications(updated);
     setShowNewModal(false);
     setSelectedBourseId("");
     setCustomTitle("");
     setCustomUniv("");
     setCustomDeadline("");
-    toast.success(`Dossier "${newApp.bourseTitre}" ajouté à votre tableau de suivi !`);
+    toast.success(lang === "fr" ? "Candidature ajoutée à votre suivi !" : "Application added to tracker!");
   };
 
-  const handleStatusChange = (appId: string, newStatus: ApplicationStatus) => {
-    const updated = applications.map((app) =>
-      app.id === appId ? { ...app, status: newStatus, updatedAt: new Date().toISOString() } : app,
+  const handleUpdateStatus = (appId: string, newStatus: ApplicationStatus) => {
+    const updated = applications.map((a) =>
+      a.id === appId
+        ? { ...a, status: newStatus, updatedAt: new Date().toISOString() }
+        : a,
     );
     saveApplications(updated);
     if (activeAppDetail?.id === appId) {
       setActiveAppDetail({ ...activeAppDetail, status: newStatus });
     }
-    toast.info("Statut de la candidature mis à jour.");
+    toast.success(lang === "fr" ? "Statut mis à jour !" : "Status updated!");
   };
 
-  const handleToggleChecklistItem = (appId: string, itemId: string) => {
-    const updated = applications.map((app) => {
-      if (app.id !== appId) return app;
-      const updatedChecklist = app.checklist.map((c) =>
-        c.id === itemId ? { ...c, completed: !c.completed } : c,
+  const handleToggleChecklist = (appId: string, checkId: string) => {
+    const updated = applications.map((a) => {
+      if (a.id !== appId) return a;
+      const updatedChecklist = a.checklist.map((c) =>
+        c.id === checkId ? { ...c, completed: !c.completed } : c,
       );
-      return { ...app, checklist: updatedChecklist, updatedAt: new Date().toISOString() };
+      return { ...a, checklist: updatedChecklist, updatedAt: new Date().toISOString() };
     });
     saveApplications(updated);
+
     if (activeAppDetail?.id === appId) {
-      const activeUpdated = updated.find((a) => a.id === appId);
-      if (activeUpdated) setActiveAppDetail(activeUpdated);
+      const curr = updated.find((a) => a.id === appId);
+      if (curr) setActiveAppDetail(curr);
     }
   };
 
-  const handleDeleteApplication = (appId: string, title: string) => {
-    if (confirm(`Voulez-vous vraiment retirer la candidature "${title}" de votre suivi ?`)) {
-      const updated = applications.filter((app) => app.id !== appId);
-      saveApplications(updated);
-      if (activeAppDetail?.id === appId) setActiveAppDetail(null);
-      toast.info("Candidature retirée du suivi.");
-    }
+  const handleDeleteApplication = (appId: string) => {
+    const updated = applications.filter((a) => a.id !== appId);
+    saveApplications(updated);
+    setActiveAppDetail(null);
+    toast.success(lang === "fr" ? "Candidature retirée du suivi." : "Application removed from tracker.");
   };
 
   const getCompletionPercentage = (app: ScholarshipApplication) => {
     if (!app.checklist || app.checklist.length === 0) return 0;
-    const completed = app.checklist.filter((c) => c.completed).length;
-    return Math.round((completed / app.checklist.length) * 100);
+    const completedCount = app.checklist.filter((c) => c.completed).length;
+    return Math.round((completedCount / app.checklist.length) * 100);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-8 pb-20">
       {/* Top Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-r from-card via-card to-primary/10 p-6 sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary shrink-0">
-              <LayoutDashboard className="h-6 w-6" />
+      <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-r from-card via-card to-primary/10 p-6 sm:p-8 shadow-card">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              <span>{tc.title}</span>
             </div>
-            <div>
-              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                Suivi Actif des Candidatures
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Pilotez chaque dossier étape par étape, complétez vos pièces obligatoires et maximisez vos chances de succès.
-              </p>
-            </div>
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+              {tc.title}
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
+              {tc.subtitle}
+            </p>
           </div>
 
           <button
@@ -250,7 +256,7 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
             onClick={() => setShowNewModal(true)}
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-5 py-3 text-xs font-bold text-white shadow-glow hover:opacity-90 transition-all shrink-0"
           >
-            <Plus className="h-4 w-4" /> Nouvelle Candidature
+            <Plus className="h-4 w-4" /> {tc.addApplication}
           </button>
         </div>
       </div>
@@ -281,7 +287,7 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
               <div className="space-y-3">
                 {colApps.length === 0 ? (
                   <div className="py-8 text-center text-xs text-muted-foreground border border-dashed border-border/60 rounded-xl p-3">
-                    Aucun dossier
+                    {tc.emptyState}
                   </div>
                 ) : (
                   colApps.map((app) => {
@@ -306,8 +312,8 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
                         {/* Completion Bar */}
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
-                            <span>Dossier : {percent}%</span>
-                            <span>{app.checklist.filter((c) => c.completed).length}/{app.checklist.length} pièces</span>
+                            <span>{lang === "fr" ? "Dossier :" : "Progress:"} {percent}%</span>
+                            <span>{app.checklist.filter((c) => c.completed).length}/{app.checklist.length} {lang === "fr" ? "pièces" : "files"}</span>
                           </div>
                           <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
                             <div
@@ -319,10 +325,12 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
                           </div>
                         </div>
 
-                        {/* Deadline badge & status */}
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/50">
+                        <div className="flex items-center justify-between pt-1 border-t border-border/60 text-[10px] text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 text-primary" /> {app.deadline}
+                            <Calendar className="h-3 w-3 text-amber-500" /> {app.deadline}
+                          </span>
+                          <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                            {lang === "fr" ? "Gérer →" : "Manage →"}
                           </span>
                         </div>
                       </div>
@@ -335,73 +343,94 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
         })}
       </div>
 
-      {/* Modal: New Application */}
+      {/* New Application Modal */}
       {showNewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-5">
-            <h3 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" /> Ajouter un Dossier au Suivi
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="font-display text-base font-bold text-foreground">
+                {tc.modal.addTitle}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowNewModal(false)}
+                className="rounded-full p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
 
             <form onSubmit={handleCreateApplication} className="space-y-4">
               {likedBourses.length > 0 && (
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                    Choisir parmi vos bourses sauvegardées :
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                    {tc.modal.selectScholarship}
                   </label>
                   <select
                     value={selectedBourseId}
-                    onChange={(e) => setSelectedBourseId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedBourseId(e.target.value);
+                      if (e.target.value) {
+                        const b = likedBourses.find((item) => item.id === e.target.value);
+                        if (b) {
+                          setCustomTitle(b.titre);
+                          setCustomUniv(b.universite || "");
+                          setCustomDeadline(b.deadline || "");
+                        }
+                      }
+                    }}
                     className="w-full rounded-xl border border-border bg-input px-3.5 py-2.5 text-xs text-foreground focus:border-primary focus:outline-none"
                   >
-                    <option value="">-- Saisie libre ou autre bourse --</option>
-                    {likedBourses.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.titre} ({b.universite || "International"})
-                      </option>
-                    ))}
+                    {likedBourses.map((b) => {
+                      const dest = Array.isArray(b.pays_destination) ? b.pays_destination[0] : b.pays_destination;
+                      return (
+                        <option key={b.id} value={b.id}>
+                          {b.titre} ({b.universite || dest || "International"})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               )}
 
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                  Intitulé de la Bourse *
+                  {tc.modal.manualScholarship}
                 </label>
                 <input
                   type="text"
                   required
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
-                  placeholder="ex: Bourse Eiffel 2026, Mastercard Foundation McGill..."
-                  className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  placeholder="Ex: Bourse Chevening UK 2026"
+                  className="w-full rounded-xl border border-border bg-input px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                    Établissement / Université
+                    {tc.modal.targetUniv}
                   </label>
                   <input
                     type="text"
                     value={customUniv}
                     onChange={(e) => setCustomUniv(e.target.value)}
-                    placeholder="ex: Sorbonne Université, Oxford..."
-                    className="w-full rounded-xl border border-border bg-input px-4 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                    placeholder="Ex: Oxford University"
+                    className="w-full rounded-xl border border-border bg-input px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                    Date Limite de Dépôt
+                    {tc.modal.deadline}
                   </label>
                   <input
                     type="text"
                     value={customDeadline}
                     onChange={(e) => setCustomDeadline(e.target.value)}
-                    placeholder="ex: 15 Janvier 2026"
-                    className="w-full rounded-xl border border-border bg-input px-4 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                    placeholder="Ex: 15 Novembre 2025"
+                    className="w-full rounded-xl border border-border bg-input px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                   />
                 </div>
               </div>
@@ -410,15 +439,15 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
                 <button
                   type="button"
                   onClick={() => setShowNewModal(false)}
-                  className="rounded-xl border border-border bg-secondary px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                  className="rounded-xl border border-border px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
-                  Annuler
+                  {tc.modal.cancel}
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-glow hover:opacity-90"
                 >
-                  Créer le Dossier
+                  {tc.modal.submit}
                 </button>
               </div>
             </form>
@@ -426,20 +455,21 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
         </div>
       )}
 
-      {/* Modal: Application Detail & Checklist */}
+      {/* Application Detail & Checklist Drawer Modal */}
       {activeAppDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-2xl overflow-y-auto max-h-[90vh] rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-2xl rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
             <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
-              <div>
-                <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
-                  Dossier de Candidature
+              <div className="space-y-1">
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary">
+                  {lang === "fr" ? "Gestion du dossier" : "Application Management"}
                 </span>
-                <h3 className="font-display text-xl font-bold text-foreground mt-2">
+                <h3 className="font-display text-lg font-bold text-foreground">
                   {activeAppDetail.bourseTitre}
                 </h3>
                 {activeAppDetail.universite && (
-                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                     <Building className="h-3.5 w-3.5 text-primary" /> {activeAppDetail.universite}
                   </p>
                 )}
@@ -448,43 +478,47 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
               <button
                 type="button"
                 onClick={() => setActiveAppDetail(null)}
-                className="rounded-full p-2 text-muted-foreground hover:bg-secondary"
+                className="rounded-full p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
               >
-                ✕
+                <XCircle className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Status Selector */}
+            {/* Change Status Buttons */}
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                Étape Actuelle du Dossier :
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                {lang === "fr" ? "Étape actuelle dans le pipeline :" : "Current stage in pipeline:"}
               </label>
-              <div className="flex flex-wrap gap-2">
-                {STATUS_COLUMNS.map((col) => (
-                  <button
-                    key={col.status}
-                    type="button"
-                    onClick={() => handleStatusChange(activeAppDetail.id, col.status)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                      activeAppDetail.status === col.status
-                        ? "bg-primary text-white border-primary shadow-sm"
-                        : "bg-secondary/60 border-border text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {col.label}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {STATUS_COLUMNS.map((col) => {
+                  const isCurrent = activeAppDetail.status === col.status;
+                  return (
+                    <button
+                      key={col.status}
+                      type="button"
+                      onClick={() => handleUpdateStatus(activeAppDetail.id, col.status)}
+                      className={`rounded-xl border p-2.5 text-center text-xs font-semibold transition-all ${
+                        isCurrent
+                          ? "border-primary bg-primary text-white shadow-sm"
+                          : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      {col.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Checklist of Required Documents */}
-            <div className="rounded-2xl border border-border bg-secondary/30 p-4 space-y-3">
+            {/* Checklist of Mandatory Documents */}
+            <div className="space-y-3 rounded-2xl border border-border bg-secondary/30 p-4 sm:p-5">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                  <CheckSquare className="h-4 w-4 text-emerald-500" /> Pièces Justificatives Obligatoires
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  {lang === "fr" ? "Checklist des Pièces Obligatoires" : "Mandatory Documents Checklist"}
                 </h4>
-                <span className="text-xs font-extrabold text-primary">
-                  {getCompletionPercentage(activeAppDetail)}% Prêt
+                <span className="text-xs font-bold text-primary">
+                  {getCompletionPercentage(activeAppDetail)}% {lang === "fr" ? "complété" : "completed"}
                 </span>
               </div>
 
@@ -492,14 +526,14 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
                 {activeAppDetail.checklist.map((item) => (
                   <div
                     key={item.id}
-                    onClick={() => handleToggleChecklistItem(activeAppDetail.id, item.id)}
-                    className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                    onClick={() => handleToggleChecklist(activeAppDetail.id, item.id)}
+                    className={`flex items-center justify-between gap-3 rounded-xl border p-3 cursor-pointer transition-all ${
                       item.completed
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-foreground"
-                        : "bg-card border-border text-muted-foreground hover:border-primary/40"
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-foreground"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       {item.completed ? (
                         <CheckSquare className="h-4 w-4 text-emerald-500 shrink-0" />
                       ) : (
@@ -511,7 +545,7 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
                     </div>
 
                     {item.requiredDocType && (
-                      <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-md font-semibold text-muted-foreground">
+                      <span className="rounded-lg bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground shrink-0 border border-border">
                         {item.requiredDocType}
                       </span>
                     )}
@@ -520,38 +554,43 @@ export const CandidaturesTrackerView: React.FC<CandidaturesTrackerViewProps> = (
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-border">
-              <button
-                type="button"
-                onClick={() => handleDeleteApplication(activeAppDetail.id, activeAppDetail.bourseTitre)}
-                className="inline-flex items-center gap-1.5 text-xs text-destructive hover:underline"
-              >
-                <Trash2 className="h-4 w-4" /> Supprimer ce dossier
-              </button>
-
-              <div className="flex gap-2">
-                {onOpenCoach && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveAppDetail(null);
-                      onOpenCoach();
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" /> Rédiger avec le Coach IA
-                  </button>
-                )}
-
+            {/* AI Assistant Help Chip */}
+            {onOpenCoach && (
+              <div className="flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 p-4 text-xs">
+                <div className="flex items-center gap-2 text-foreground font-semibold">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                  <span>{lang === "fr" ? "Besoin d'aide pour rédiger ou relire votre dossier ?" : "Need help writing or reviewing your application?"}</span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setActiveAppDetail(null)}
-                  className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-glow"
+                  onClick={() => {
+                    setActiveAppDetail(null);
+                    onOpenCoach();
+                  }}
+                  className="rounded-xl bg-primary px-3 py-1.5 font-bold text-white shadow-sm hover:opacity-90 shrink-0"
                 >
-                  Fermer
+                  {lang === "fr" ? "Ouvrir le Coach IA" : "Open AI Coach"}
                 </button>
               </div>
+            )}
+
+            {/* Footer actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-border">
+              <button
+                type="button"
+                onClick={() => handleDeleteApplication(activeAppDetail.id)}
+                className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> {lang === "fr" ? "Supprimer de mon suivi" : "Delete application"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveAppDetail(null)}
+                className="rounded-xl bg-secondary px-5 py-2 text-xs font-bold text-foreground hover:bg-secondary/80"
+              >
+                {lang === "fr" ? "Fermer" : "Close"}
+              </button>
             </div>
           </div>
         </div>

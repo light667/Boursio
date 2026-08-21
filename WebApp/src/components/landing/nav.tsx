@@ -67,14 +67,14 @@ export function Nav({ onLaunchApp }: NavProps) {
         <div className="flex items-center gap-2">
           <ThemeToggle className="hidden sm:inline-flex" />
 
-          {/* Language switcher */}
+          {/* Language switcher - directly visible on mobile and desktop */}
           <button
             type="button"
             onClick={toggleLang}
             title={`Switch to ${nextLang.toUpperCase()}`}
-            className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-border bg-card hover:bg-muted/50 text-xs font-bold text-foreground transition-all"
+            className="inline-flex items-center gap-1 sm:gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl border border-border bg-card hover:bg-muted/50 text-xs font-bold text-foreground transition-all"
           >
-            <Globe className="h-3.5 w-3.5" />
+            <Globe className="h-3.5 w-3.5 text-primary" />
             <span>{langFlag} {langLabel}</span>
           </button>
 

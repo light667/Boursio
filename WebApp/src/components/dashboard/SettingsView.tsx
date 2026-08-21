@@ -4,6 +4,8 @@ import { StudentProfile } from "@/lib/types";
 import { User as FirebaseUser } from "firebase/auth";
 import { getUserSubscription, getUserTransactions, PLANS_CONFIG } from "@/lib/subscription";
 import { PlanBadge } from "@/components/subscription/PlanBadge";
+import { useLang } from "@/hooks/use-lang";
+import type { Lang } from "@/lib/i18n";
 import {
   Sun,
   Moon,
@@ -35,8 +37,6 @@ interface SettingsViewProps {
   onOpenPaymentModal?: () => void;
 }
 
-type Language = "fr" | "en";
-
 export const SettingsView: React.FC<SettingsViewProps> = ({
   currentUser,
   studentProfile,
@@ -45,9 +45,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onOpenPaymentModal,
 }) => {
   const { theme, setTheme } = useTheme();
-  const [language, setLanguage] = useState<Language>(
-    (localStorage.getItem("boursio-language") as Language) || "fr",
-  );
+  const { lang: appLang, setLang } = useLang();
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [pushAlerts, setPushAlerts] = useState(true);
   const [frequency, setFrequency] = useState<"daily" | "weekly">("daily");
@@ -128,11 +126,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     },
   };
 
-  const lang = t[language];
+  const lang = t[appLang];
 
-  const handleLanguageChange = (lang: Language) => {
-    setLanguage(lang);
-    localStorage.setItem("boursio-language", lang);
+  const handleLanguageChange = (newLang: Lang) => {
+    setLang(newLang);
   };
 
   const handleSendResetPassword = () => {
@@ -234,37 +231,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="button"
               onClick={() => handleLanguageChange("fr")}
               className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
-                language === "fr"
+                appLang === "fr"
                   ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
                   : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
               }`}
             >
               <span className="text-2xl">🇫🇷</span>
               Français
-              {language === "fr" && <Check className="h-3.5 w-3.5 text-primary" />}
+              {appLang === "fr" && <Check className="h-3.5 w-3.5 text-primary" />}
             </button>
 
             <button
               type="button"
               onClick={() => handleLanguageChange("en")}
               className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
-                language === "en"
+                appLang === "en"
                   ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
                   : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
               }`}
             >
               <span className="text-2xl">🇬🇧</span>
               English
-              {language === "en" && <Check className="h-3.5 w-3.5 text-primary" />}
+              {appLang === "en" && <Check className="h-3.5 w-3.5 text-primary" />}
             </button>
           </div>
-
-          {language === "en" && (
-            <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
-              <Info className="h-4 w-4 shrink-0 mt-0.5" />
-              Full English translation coming soon. Some elements may remain in French.
-            </div>
-          )}
         </div>
 
         {/* Subscription & Plans Management — full width */}
@@ -357,7 +347,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           ) : (
             <div className="flex flex-col items-center gap-4 py-4">
               <p className="text-sm text-muted-foreground text-center">
-                {language === "fr"
+                {appLang === "fr"
                   ? "Connectez-vous pour accéder aux paramètres de votre compte."
                   : "Sign in to access your account settings."}
               </p>

@@ -1,27 +1,48 @@
 import React, { useState } from "react";
-import { Sparkles, ArrowRight, CheckCircle2, TrendingUp, Award, ShieldAlert, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, TrendingUp, Award, ShieldAlert, Zap } from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
 
 interface AcceptanceSimulatorProps {
   onLaunchApp?: () => void;
 }
 
 export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaunchApp }) => {
+  const { lang, t } = useLang();
+  const ts = t.simulator[lang];
+
   const [nationality, setNationality] = useState("Togo");
-  const [level, setLevel] = useState("Licence 3");
-  const [field, setField] = useState("Informatique & IA");
+  const [level, setLevel] = useState("lic3");
+  const [field, setField] = useState("cs");
   const [gpa, setGpa] = useState<number>(15);
-  const [destination, setDestination] = useState("France");
+  const [destination, setDestination] = useState("fr");
 
   // Dynamic simulation calculations
   const baseRate = Math.min(Math.round((gpa / 20) * 55 + 15), 65);
   const optimizedRate = Math.min(Math.round(baseRate + (gpa >= 14 ? 38 : 34)), 98);
   const matchedScholarshipsCount = gpa >= 14 ? 18 : 12;
 
+  const destinationName =
+    destination === "fr"
+      ? "France"
+      : destination === "ca"
+      ? "Canada"
+      : destination === "uk"
+      ? "UK"
+      : destination === "us"
+      ? "USA"
+      : destination === "de"
+      ? "Germany"
+      : destination === "jp"
+      ? "Japan"
+      : "Switzerland";
+
   const highlights = [
-    `Alignement profil avec ${matchedScholarshipsCount} bourses actives en ${destination}`,
-    "Génération de Lettre de Motivation ultra-personnalisée par l'IA",
-    "Optimisation du CV aux standards d'évaluation internationaux (ATS)",
-    "Vérification rigoureuse des critères d'éligibilité et calendrier de dépôt",
+    ts.highlight1
+      .replace("{count}", String(matchedScholarshipsCount))
+      .replace("{dest}", destinationName),
+    ts.highlight2,
+    ts.highlight3,
+    ts.highlight4,
   ];
 
   return (
@@ -33,12 +54,11 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14">
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-            Testez vos Chances d'Obtenir une Bourse et Passez à{" "}
-            <span className="gradient-text">98% d'Acceptation</span>
+            {ts.title}
+            <span className="gradient-text">{ts.titleAccent}</span>
           </h2>
           <p className="mt-4 text-base text-muted-foreground leading-relaxed">
-            Renseignez vos critères académiques. Découvrez instantanément comment l'intelligence
-            artificielle de Boursio transforme une candidature classique en dossier d'élite.
+            {ts.sub}
           </p>
         </div>
 
@@ -47,14 +67,14 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
           {/* Controls Form (Left Column) */}
           <div className="lg:col-span-6 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-card space-y-5">
             <h3 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" /> Vos Informations Académiques
+              <Zap className="h-5 w-5 text-primary" /> {ts.formTitle}
             </h3>
 
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Nationalité */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                  Nationalité / Origine
+                  {ts.nationalityLabel}
                 </label>
                 <select
                   value={nationality}
@@ -68,64 +88,64 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
                   <option value="Cameroun">Cameroun 🇨🇲</option>
                   <option value="Guinée">Guinée 🇬🇳</option>
                   <option value="RDC">RD Congo 🇨🇩</option>
-                  <option value="Autre">Autre Pays 🌍</option>
+                  <option value="Autre">{ts.otherCountry}</option>
                 </select>
               </div>
 
               {/* Niveau actuel */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                  Niveau d'Études Actuel
+                  {ts.levelLabel}
                 </label>
                 <select
                   value={level}
                   onChange={(e) => setLevel(e.target.value)}
                   className="w-full rounded-xl border border-border bg-input px-3.5 py-2.5 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
                 >
-                  <option value="Baccalauréat">Baccalauréat</option>
-                  <option value="Licence 1 / 2">Licence 1 / 2</option>
-                  <option value="Licence 3">Licence 3 / Diplômé Bac+3</option>
-                  <option value="Master 1 / 2">Master 1 / 2</option>
-                  <option value="Doctorat">Doctorat / Recherche</option>
+                  <option value="bac">{ts.levels.bac}</option>
+                  <option value="lic12">{ts.levels.lic12}</option>
+                  <option value="lic3">{ts.levels.lic3}</option>
+                  <option value="master">{ts.levels.master}</option>
+                  <option value="phd">{ts.levels.phd}</option>
                 </select>
               </div>
 
               {/* Filière */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                  Filière / Domaine Cible
+                  {ts.fieldLabel}
                 </label>
                 <select
                   value={field}
                   onChange={(e) => setField(e.target.value)}
                   className="w-full rounded-xl border border-border bg-input px-3.5 py-2.5 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
                 >
-                  <option value="Informatique & IA">Informatique & IA</option>
-                  <option value="Ingénierie & Sciences">Ingénierie & Technologies</option>
-                  <option value="Économie & Gestion">Économie & Finance</option>
-                  <option value="Santé & Médecine">Santé & Médecine</option>
-                  <option value="Droit & Sciences Po">Droit & Sciences Politiques</option>
-                  <option value="Agronomie & Écologie">Agronomie & Environnement</option>
+                  <option value="cs">{ts.fields.cs}</option>
+                  <option value="eng">{ts.fields.eng}</option>
+                  <option value="econ">{ts.fields.econ}</option>
+                  <option value="health">{ts.fields.health}</option>
+                  <option value="law">{ts.fields.law}</option>
+                  <option value="agro">{ts.fields.agro}</option>
                 </select>
               </div>
 
               {/* Pays de destination */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                  Destination Souhaitée
+                  {ts.destinationLabel}
                 </label>
                 <select
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
                   className="w-full rounded-xl border border-border bg-input px-3.5 py-2.5 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
                 >
-                  <option value="France">France (Eiffel, Erasmus, etc.)</option>
-                  <option value="Canada">Canada (Vanier, Bourses Québec)</option>
-                  <option value="Royaume-Uni">Royaume-Uni (Chevening)</option>
-                  <option value="USA">États-Unis (Fulbright)</option>
-                  <option value="Allemagne">Allemagne (DAAD)</option>
-                  <option value="Japon">Japon (MEXT)</option>
-                  <option value="Suisse">Suisse (Excellence Confédération)</option>
+                  <option value="fr">{ts.destinations.fr}</option>
+                  <option value="ca">{ts.destinations.ca}</option>
+                  <option value="uk">{ts.destinations.uk}</option>
+                  <option value="us">{ts.destinations.us}</option>
+                  <option value="de">{ts.destinations.de}</option>
+                  <option value="jp">{ts.destinations.jp}</option>
+                  <option value="ch">{ts.destinations.ch}</option>
                 </select>
               </div>
             </div>
@@ -133,7 +153,7 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
             {/* GPA Slider */}
             <div className="space-y-2 pt-2">
               <div className="flex items-center justify-between text-xs font-semibold text-foreground">
-                <span>Moyenne académique estimée :</span>
+                <span>{ts.gpaLabel}</span>
                 <span className="rounded-lg bg-primary/20 px-2.5 py-1 text-sm font-bold text-primary">
                   {gpa} / 20
                 </span>
@@ -148,9 +168,9 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
                 className="w-full h-2 rounded-lg bg-secondary accent-primary cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>10/20 (Passable)</span>
-                <span>14/20 (Bien)</span>
-                <span>18/20 (Excellent)</span>
+                <span>{ts.gpaPassable}</span>
+                <span>{ts.gpaGood}</span>
+                <span>{ts.gpaExcellent}</span>
               </div>
             </div>
           </div>
@@ -159,10 +179,10 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
           <div className="lg:col-span-6 rounded-3xl border border-primary/40 bg-gradient-to-b from-card via-card to-primary/10 p-6 sm:p-8 shadow-glow space-y-6">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                Résultat de l'Analyse Prédictive
+                {ts.resultTitle}
               </span>
               <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                <TrendingUp className="h-3.5 w-3.5" /> +{(optimizedRate - baseRate)}% de Gain IA
+                <TrendingUp className="h-3.5 w-3.5" /> +{optimizedRate - baseRate}% {ts.gainLabel}
               </span>
             </div>
 
@@ -171,7 +191,7 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
               {/* Without Boursio */}
               <div className="rounded-2xl border border-border bg-secondary/50 p-4 text-center space-y-2">
                 <span className="text-[11px] font-semibold text-muted-foreground flex items-center justify-center gap-1">
-                  <ShieldAlert className="h-3.5 w-3.5 text-amber-500" /> Candidature Seule
+                  <ShieldAlert className="h-3.5 w-3.5 text-amber-500" /> {ts.withoutBoursio}
                 </span>
                 <div className="text-3xl font-extrabold text-muted-foreground">{baseRate}%</div>
                 <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
@@ -180,14 +200,14 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
                     style={{ width: `${baseRate}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground">Erreurs de lettre, deadlines ratées</p>
+                <p className="text-[10px] text-muted-foreground">{ts.withoutBoursioSub}</p>
               </div>
 
               {/* With Boursio 98% */}
               <div className="rounded-2xl border border-primary/50 bg-primary/15 p-4 text-center space-y-2 relative overflow-hidden">
                 <div className="absolute top-0 right-0 h-12 w-12 bg-primary/20 rounded-full blur-lg" />
                 <span className="text-[11px] font-extrabold text-primary flex items-center justify-center gap-1">
-                  <Award className="h-3.5 w-3.5 text-primary" /> Avec Boursio IA
+                  <Award className="h-3.5 w-3.5 text-primary" /> {ts.withBoursio}
                 </span>
                 <div className="text-3xl sm:text-4xl font-black text-foreground gradient-text">
                   {optimizedRate}%
@@ -198,14 +218,14 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
                     style={{ width: `${optimizedRate}%` }}
                   />
                 </div>
-                <p className="text-[10px] font-semibold text-primary">Dossier optimisé & conforme</p>
+                <p className="text-[10px] font-semibold text-primary">{ts.withBoursioSub}</p>
               </div>
             </div>
 
             {/* Key action points */}
             <div className="space-y-2.5 rounded-2xl border border-border/80 bg-secondary/30 p-4">
               <div className="text-xs font-bold text-foreground mb-1">
-                Pourquoi votre taux grimpe à {optimizedRate}% :
+                {ts.whyBoostTitle} {optimizedRate}% :
               </div>
               {highlights.map((h, idx) => (
                 <div key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
@@ -221,7 +241,9 @@ export const AcceptanceSimulator: React.FC<AcceptanceSimulatorProps> = ({ onLaun
               onClick={onLaunchApp}
               className="w-full inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-primary via-blue-600 to-teal-600 py-4 text-sm font-bold text-white shadow-glow hover:shadow-glow-strong hover:scale-[1.01] transition-all"
             >
-              <span>Découvrir mes {matchedScholarshipsCount} Bourses Compatibles</span>
+              <span>
+                {ts.ctaButton.replace("{count}", String(matchedScholarshipsCount))}
+              </span>
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>

@@ -2,16 +2,17 @@ import React from "react";
 import {
   Target,
   Sparkles,
-  Bot,
-  FileCheck,
   LayoutDashboard,
   Users,
-  Award,
+  FileCheck,
   Zap,
-  ArrowRight,
 } from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
 
 export const Features: React.FC = () => {
+  const { lang, t } = useLang();
+  const tf = t.features[lang];
+
   return (
     <section id="features" className="relative py-24 sm:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -19,14 +20,13 @@ export const Features: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary mb-3">
             <Zap className="h-3.5 w-3.5" />
-            <span>TECHNOLOGIE & EXPÉRIENCE DE POINTE</span>
+            <span>{tf.sectionLabel}</span>
           </div>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-            Tout ce qu'il Faut pour Décrocher votre <span className="gradient-text">Financement</span>
+            {tf.title} <span className="gradient-text">{tf.titleAccent}</span>
           </h2>
           <p className="mt-4 text-sm sm:text-base text-muted-foreground">
-            Une suite complète d'outils intelligents conçue pour éliminer le stress des recherches et
-            maximiser vos chances d'admission internationale.
+            {tf.sub}
           </p>
         </div>
 
@@ -39,19 +39,17 @@ export const Features: React.FC = () => {
                 <Target className="h-6 w-6" />
               </div>
               <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground">
-                Matching Algorithmique Ultra-Ciblé
+                {tf.item1Title}
               </h3>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Fini les heures passées à chercher au hasard. Notre algorithme croise votre moyenne,
-                votre filière, votre nationalité et votre niveau d'études pour ne vous afficher que les
-                bourses où vos chances d'admission sont réelles.
+                {tf.item1Desc}
               </p>
             </div>
 
             <div className="mt-8 rounded-2xl border border-primary/20 bg-secondary/40 p-4 space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-foreground">
-                <span>Calcul automatique du Match Score :</span>
-                <span className="text-primary font-black">98% Pertinence</span>
+                <span>{tf.item1ScoreLabel}</span>
+                <span className="text-primary font-black">{tf.item1ScoreValue}</span>
               </div>
               <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-primary to-emerald-400 w-[98%]" />
@@ -66,16 +64,15 @@ export const Features: React.FC = () => {
                 <Sparkles className="h-6 w-6" />
               </div>
               <h3 className="font-display text-xl font-bold text-foreground">
-                Générateur de Lettres d'Élite
+                {tf.item2Title}
               </h3>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Une lettre de motivation percutante rédigée en 30 secondes selon les directives
-                académiques strictes des universités internationales et comités de bourses.
+                {tf.item2Desc}
               </p>
             </div>
 
             <div className="mt-6 rounded-xl border border-border/80 bg-secondary/30 p-3 text-[11px] text-muted-foreground italic">
-              "Bénéficier de cette bourse me permettra de me consacrer pleinement à la recherche..."
+              {tf.item2Quote}
             </div>
           </div>
 
@@ -86,11 +83,10 @@ export const Features: React.FC = () => {
                 <LayoutDashboard className="h-6 w-6" />
               </div>
               <h3 className="font-display text-lg font-bold text-foreground">
-                Suivi Actif Kanban
+                {tf.item3Title}
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Pilotez chaque candidature étape par étape : pièces obligatoires, calendrier de clôture
-                et relances automatiques.
+                {tf.item3Desc}
               </p>
             </div>
           </div>
@@ -102,11 +98,10 @@ export const Features: React.FC = () => {
                 <Users className="h-6 w-6" />
               </div>
               <h3 className="font-display text-lg font-bold text-foreground">
-                Mentorat d'Alumni
+                {tf.item4Title}
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Échangez en direct avec des lauréats des bourses Eiffel, Chevening et Mastercard pour
-                des simulations d'oraux et relectures de dossiers.
+                {tf.item4Desc}
               </p>
             </div>
           </div>
@@ -118,11 +113,10 @@ export const Features: React.FC = () => {
                 <FileCheck className="h-6 w-6" />
               </div>
               <h3 className="font-display text-lg font-bold text-foreground">
-                Coffre-Fort Sécurisé
+                {tf.item5Title}
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Stockez en toute sécurité vos passeports, actes de nationalité, relevés de notes et
-                diplômes pour postuler en 1 clic.
+                {tf.item5Desc}
               </p>
             </div>
           </div>

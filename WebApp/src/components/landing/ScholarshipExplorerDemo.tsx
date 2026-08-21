@@ -2,12 +2,16 @@ import React, { useState, useMemo } from "react";
 import { getAllBourses } from "@/lib/boursesData";
 import { Bourse } from "@/lib/types";
 import { Search, MapPin, Calendar, DollarSign, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
+import { useLang } from "@/hooks/use-lang";
 
 interface ScholarshipExplorerDemoProps {
   onLaunchApp?: () => void;
 }
 
 export const ScholarshipExplorerDemo: React.FC<ScholarshipExplorerDemoProps> = ({ onLaunchApp }) => {
+  const { lang, t } = useLang();
+  const te = t.explorer[lang];
+
   const [filterRegion, setFilterRegion] = useState("ALL");
   const [query, setQuery] = useState("");
 
@@ -49,12 +53,14 @@ export const ScholarshipExplorerDemo: React.FC<ScholarshipExplorerDemoProps> = (
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary mb-3">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>EXPLORATEUR EN TEMPS RÉEL</span>
+              <span>{te.badge}</span>
             </div>
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-              Plus de <span className="gradient-text">500 Bourses Officielles</span> Vérifiées
+              {te.title}<span className="gradient-text">{te.titleAccent}</span>{te.titleEnd}
             </h2>
-            
+            <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">
+              {te.sub}
+            </p>
           </div>
 
           <button
@@ -62,7 +68,7 @@ export const ScholarshipExplorerDemo: React.FC<ScholarshipExplorerDemoProps> = (
             onClick={onLaunchApp}
             className="inline-flex items-center gap-2 rounded-2xl bg-secondary hover:bg-secondary/80 border border-border px-5 py-3 text-xs font-bold text-foreground transition-all shrink-0"
           >
-            <span>Voir tout le catalogue ({allBourses.length})</span>
+            <span>{te.viewAll} ({allBourses.length})</span>
             <ArrowRight className="h-4 w-4 text-primary" />
           </button>
         </div>
@@ -75,14 +81,14 @@ export const ScholarshipExplorerDemo: React.FC<ScholarshipExplorerDemoProps> = (
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filtrer par bourse, université, pays, filière..."
+              placeholder={te.searchPlaceholder}
               className="w-full rounded-xl border border-border bg-input pl-10 pr-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
             {[
-              { id: "ALL", label: "Toutes les destinations" },
+              { id: "ALL", label: te.filterAll },
               { id: "FR", label: "France 🇫🇷" },
               { id: "CA", label: "Canada 🇨🇦" },
               { id: "UK", label: "UK 🇬🇧" },
@@ -113,7 +119,7 @@ export const ScholarshipExplorerDemo: React.FC<ScholarshipExplorerDemoProps> = (
 
             const levelLabel = Array.isArray(b.niveau_etude)
               ? b.niveau_etude.join(", ")
-              : b.niveau_etude || "Tous niveaux";
+              : b.niveau_etude || te.allLevels;
 
             return (
               <div
@@ -124,10 +130,10 @@ export const ScholarshipExplorerDemo: React.FC<ScholarshipExplorerDemoProps> = (
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                      {b.financement === "TOTAL" ? "100% Totalement Financée" : "Financement Partiel"}
+                      {b.financement === "TOTAL" ? te.fullFunding : te.partialFunding}
                     </span>
                     <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-black text-primary">
-                      Officielle
+                      {te.officialBadge}
                     </span>
                   </div>
 
@@ -145,19 +151,19 @@ export const ScholarshipExplorerDemo: React.FC<ScholarshipExplorerDemoProps> = (
                   <div className="mt-4 rounded-2xl border border-border/80 bg-secondary/50 p-3 space-y-1.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                        <DollarSign className="h-3.5 w-3.5 text-emerald-500" /> Montant :
+                        <DollarSign className="h-3.5 w-3.5 text-emerald-500" /> {te.amountLabel}
                       </span>
                       <span className="font-bold text-foreground text-[11px] text-right truncate max-w-[170px]">
-                        {b.montant_bourse || "Allocation complète"}
+                        {b.montant_bourse || te.fullAllocation}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                        <Calendar className="h-3.5 w-3.5 text-amber-500" /> Clôture :
+                        <Calendar className="h-3.5 w-3.5 text-amber-500" /> {te.deadlineLabel}
                       </span>
                       <span className="font-semibold text-foreground text-[11px]">
-                        {b.deadline || "Consulter le calendrier"}
+                        {b.deadline || te.checkCalendar}
                       </span>
                     </div>
                   </div>
@@ -165,10 +171,10 @@ export const ScholarshipExplorerDemo: React.FC<ScholarshipExplorerDemoProps> = (
 
                 <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">
-                    Niveaux : <strong className="text-foreground">{levelLabel}</strong>
+                    {te.levelsLabel} <strong className="text-foreground">{levelLabel}</strong>
                   </span>
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-primary group-hover:translate-x-1 transition-transform">
-                    Postuler via IA <ArrowRight className="h-3 w-3" />
+                    {te.applyViaAI} <ArrowRight className="h-3 w-3" />
                   </span>
                 </div>
               </div>
